@@ -92,7 +92,8 @@ def _parse_float_br(val: Any) -> float:
 def carregar_dataframe_empresas_filtrado(filtros_parquet: List[tuple]) -> pd.DataFrame:
     try:
         from pyarrow import parquet as pq
-        fp = str(Config.ARQUIVOS_PARQUET['estabelecimentos']).replace('\\','/')
+        raw_path = str(Config.ARQUIVOS_PARQUET['estabelecimentos'])
+        fp = raw_path.replace('\\', '/')
         pf = pq.ParquetFile(fp)
         cols = [c.name for c in pf.schema]
         def pick(cands, default=None):
@@ -664,8 +665,9 @@ def executar_analise_setorial(cnae_codes=None, termo_busca=None, uf=None,
                         where.append(f"{year_expr} <= {int(ano_inicio_max)}")
                 where_sql = (" WHERE " + " AND ".join(where)) if where else ""
                 sel_cols = ",".join(cols_estab)
+                t_path = str(Config.ARQUIVOS_PARQUET['estabelecimentos']).replace('\\', '/')
                 q = (
-                    f"SELECT {sel_cols} FROM parquet_scan('{str(Config.ARQUIVOS_PARQUET['estabelecimentos']).replace('\\','/')}')"
+                    f"SELECT {sel_cols} FROM parquet_scan('{t_path}')"
                     f"{where_sql} LIMIT 20000"
                 )
                 df_estabelecimentos = duckdb.sql(q).to_df()

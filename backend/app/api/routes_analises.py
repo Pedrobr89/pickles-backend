@@ -480,8 +480,8 @@ def rota_kpis_base():
     situacoes = []
     
     try:
-        est_path = str(Config.ARQUIVOS_PARQUET['estabelecimentos']).replace('\\','/')
-        emp_path = str(Config.ARQUIVOS_PARQUET['empresas']).replace('\\','/')
+        est_path = str(Config.ARQUIVOS_PARQUET['estabelecimentos']).replace('\\', '/')
+        emp_path = str(Config.ARQUIVOS_PARQUET['empresas']).replace('\\', '/')
         
         # UF
         q1 = (
@@ -494,7 +494,7 @@ def rota_kpis_base():
         # CNAE principal com descrição
         try:
             # Carregar tabela de CNAEs para obter descrições
-            cnae_path = str(Config.ARQUIVOS_PARQUET.get('cnaes', '')).replace('\\','/')
+            cnae_path = str(Config.ARQUIVOS_PARQUET.get('cnaes', '')).replace('\\', '/')
             if Path(cnae_path).exists():
                 q2 = (
                     f"SELECT e.cnae_fiscal_principal AS cnae, c.descricao, COUNT(*) as count "
@@ -795,12 +795,19 @@ def api_nl2sql():
 
     try:
         con = duckdb.connect()
-        con.execute(f"CREATE OR REPLACE VIEW empresas AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['empresas']).replace('\\','/')}')")
-        con.execute(f"CREATE OR REPLACE VIEW estabelecimentos AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['estabelecimentos']).replace('\\','/')}')")
-        con.execute(f"CREATE OR REPLACE VIEW socios AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['socios']).replace('\\','/')}')")
-        con.execute(f"CREATE OR REPLACE VIEW simples AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['simples']).replace('\\','/')}')")
-        con.execute(f"CREATE OR REPLACE VIEW cnaes AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['cnaes']).replace('\\','/')}')")
-        con.execute(f"CREATE OR REPLACE VIEW municipios AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['municipios']).replace('\\','/')}')")
+        p_emp = str(Config.ARQUIVOS_PARQUET['empresas']).replace('\\', '/')
+        p_est = str(Config.ARQUIVOS_PARQUET['estabelecimentos']).replace('\\', '/')
+        p_soc = str(Config.ARQUIVOS_PARQUET['socios']).replace('\\', '/')
+        p_simp = str(Config.ARQUIVOS_PARQUET['simples']).replace('\\', '/')
+        p_cnaes = str(Config.ARQUIVOS_PARQUET['cnaes']).replace('\\', '/')
+        p_mun = str(Config.ARQUIVOS_PARQUET['municipios']).replace('\\', '/')
+        
+        con.execute(f"CREATE OR REPLACE VIEW empresas AS SELECT * FROM read_parquet('{p_emp}')")
+        con.execute(f"CREATE OR REPLACE VIEW estabelecimentos AS SELECT * FROM read_parquet('{p_est}')")
+        con.execute(f"CREATE OR REPLACE VIEW socios AS SELECT * FROM read_parquet('{p_soc}')")
+        con.execute(f"CREATE OR REPLACE VIEW simples AS SELECT * FROM read_parquet('{p_simp}')")
+        con.execute(f"CREATE OR REPLACE VIEW cnaes AS SELECT * FROM read_parquet('{p_cnaes}')")
+        con.execute(f"CREATE OR REPLACE VIEW municipios AS SELECT * FROM read_parquet('{p_mun}')")
         df = con.execute(sql).df()
         con.close()
         cols = [str(c) for c in (list(df.columns) if df is not None else [])]

@@ -1108,12 +1108,19 @@ def api_ai_nlq():
         sql = sql + f" LIMIT {limite}"
     try:
         con = duckdb.connect()
-        con.execute(f"CREATE OR REPLACE VIEW empresas AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['empresas']).replace('\\','/')}')")
-        con.execute(f"CREATE OR REPLACE VIEW estabelecimentos AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['estabelecimentos']).replace('\\','/')}')")
-        con.execute(f"CREATE OR REPLACE VIEW socios AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['socios']).replace('\\','/')}')")
-        con.execute(f"CREATE OR REPLACE VIEW simples AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['simples']).replace('\\','/')}')")
-        con.execute(f"CREATE OR REPLACE VIEW cnaes AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['cnaes']).replace('\\','/')}')")
-        con.execute(f"CREATE OR REPLACE VIEW municipios AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['municipios']).replace('\\','/')}')")
+        p_emp = str(Config.ARQUIVOS_PARQUET['empresas']).replace('\\', '/')
+        p_est = str(Config.ARQUIVOS_PARQUET['estabelecimentos']).replace('\\', '/')
+        p_soc = str(Config.ARQUIVOS_PARQUET['socios']).replace('\\', '/')
+        p_simp = str(Config.ARQUIVOS_PARQUET['simples']).replace('\\', '/')
+        p_cnaes = str(Config.ARQUIVOS_PARQUET['cnaes']).replace('\\', '/')
+        p_mun = str(Config.ARQUIVOS_PARQUET['municipios']).replace('\\', '/')
+        
+        con.execute(f"CREATE OR REPLACE VIEW empresas AS SELECT * FROM read_parquet('{p_emp}')")
+        con.execute(f"CREATE OR REPLACE VIEW estabelecimentos AS SELECT * FROM read_parquet('{p_est}')")
+        con.execute(f"CREATE OR REPLACE VIEW socios AS SELECT * FROM read_parquet('{p_soc}')")
+        con.execute(f"CREATE OR REPLACE VIEW simples AS SELECT * FROM read_parquet('{p_simp}')")
+        con.execute(f"CREATE OR REPLACE VIEW cnaes AS SELECT * FROM read_parquet('{p_cnaes}')")
+        con.execute(f"CREATE OR REPLACE VIEW municipios AS SELECT * FROM read_parquet('{p_mun}')")
         df = con.execute(sql).df()
         con.close()
         cols = [str(c) for c in (list(df.columns) if df is not None else [])]

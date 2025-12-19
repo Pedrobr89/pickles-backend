@@ -58,39 +58,50 @@ def create_app(config_name='development'):
     app.config['JSON_AS_ASCII'] = False
 
     # === FIX RENDER DNS ===
-    # Resolve explicitamente o hostname do banco para IPv4 para evitar problemas com IPv6 no Render
+    # Fix para Render/Supabase:
+    # 1. Garante uso da porta 6543 (Pooler) - APLICA IMEDIATAMENTE
+    # 2. Tenta resolver hostname para IPv4 (Opcional, se falhar mantém o hostname)
     try:
+        db_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+        
+        # [PASSO 1] Força porta 6543 se for Supabase
+        if "supabase.co" in db_url and ":5432" in db_url:
+            db_url = db_url.replace(":5432", ":6543")
+            app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+            logger.info("Fix Supabase: Porta alterada para 6543 (Pooler) e salva na config.")
+
+        # [PASSO 2] Tenta resolver DNS para IPv4
+        # Recarrega a URL da config (que pode ter mudado no passo 1)
         db_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
         if "supabase.co" in db_url:
             import socket
             from urllib.parse import urlparse
             
-            logger.info(f"Detectado Supabase URL. Tentando resolver DNS IPv4...")
-            
-            # Força porta 6543
-            if ":5432" in db_url:
-                db_url = db_url.replace(":5432", ":6543")
-                logger.info("Porta alterada para 6543 (Pooler)")
-
             parsed = urlparse(db_url)
             host = parsed.hostname
+            
             if host:
+                logger.info(f"Tentando resolver DNS IPv4 para: {host}")
                 # Resolve IPv4
-                infos = socket.getaddrinfo(host, None, family=socket.AF_INET, type=socket.SOCK_STREAM)
-                if infos:
-                    ip = infos[0][4][0]
-                    logger.info(f"DNS Resolvido: {host} -> {ip}")
-                    
-                    # Substitui host por IP na URL
-                    new_netloc = parsed.netloc.replace(host, f"{ip}")
-                    db_url = parsed._replace(netloc=new_netloc).geturl()
-                    
-                    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-                    logger.info("SQLALCHEMY_DATABASE_URI atualizada com IP IPv4")
-                else:
-                    logger.warning(f"Nenhum IP IPv4 encontrado para {host}")
+                try:
+                    infos = socket.getaddrinfo(host, None, family=socket.AF_INET, type=socket.SOCK_STREAM)
+                    if infos:
+                        ip = infos[0][4][0]
+                        logger.info(f"DNS Resolvido: {host} -> {ip}")
+                        
+                        # Substitui host por IP na URL
+                        new_netloc = parsed.netloc.replace(host, f"{ip}")
+                        db_url_ipv4 = parsed._replace(netloc=new_netloc).geturl()
+                        
+                        app.config['SQLALCHEMY_DATABASE_URI'] = db_url_ipv4
+                        logger.info("SQLALCHEMY_DATABASE_URI atualizada com IP IPv4")
+                    else:
+                        logger.warning(f"Nenhum IP IPv4 encontrado para {host}")
+                except Exception as dns_err:
+                     logger.warning(f"Falha na resolução de DNS ({dns_err}). Mantendo hostname original na porta 6543.")
+
     except Exception as e:
-        logger.error(f"Erro ao aplicar fix de DNS: {e}")
+        logger.error(f"Erro genérico no fix Render/Supabase: {e}")
     # ======================
 
     # Configura CORS

@@ -114,13 +114,16 @@ def consultar_cnpj_completo(cnpj: str) -> Optional[pd.DataFrame]:
         if not emp_basico:
             raise ValueError('Coluna de cnpj_basico no EMPRESAS não encontrada')
 
+        est_path = str(Config.ARQUIVOS_PARQUET['estabelecimentos']).replace('\\', '/')
+        emp_path = str(Config.ARQUIVOS_PARQUET['empresas']).replace('\\', '/')
+
         q = f"""
         WITH est AS (
             SELECT 
                 regexp_replace(cast({basico} as VARCHAR),'[^0-9]','') AS est_basico,
                 regexp_replace(cast({ordem} as VARCHAR),'[^0-9]','') AS est_ordem,
                 regexp_replace(cast({dv} as VARCHAR),'[^0-9]','') AS est_dv
-            FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['estabelecimentos']).replace('\\','/')}')
+            FROM read_parquet('{est_path}')
         ), emp AS (
             SELECT 
                 regexp_replace(cast({emp_basico} as VARCHAR),'[^0-9]','') AS emp_basico,
@@ -130,7 +133,7 @@ def consultar_cnpj_completo(cnpj: str) -> Optional[pd.DataFrame]:
                 {porte1 or 'NULL'} AS porte_da_empresa,
                 {natureza or 'NULL'} AS natureza_juridica,
                 {cnae or 'NULL'} AS cnae_fiscal
-            FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['empresas']).replace('\\','/')}')
+            FROM read_parquet('{emp_path}')
         )
         SELECT 
             emp.emp_basico AS cnpj_basico,
@@ -227,7 +230,8 @@ def verificar_divida_pgfn(cnpj: str) -> dict:
             cand = next((c for c in cols if 'cnpj' in c.lower()), None)
             if not cand:
                 continue
-            q = f"SELECT COUNT(*) as n FROM read_parquet('{str(f).replace('\\','/')}') WHERE regexp_replace(cast({cand} as VARCHAR),'[^0-9]','') = '{num}'"
+            f_path_safe = str(f).replace('\\', '/')
+            q = f"SELECT COUNT(*) as n FROM read_parquet('{f_path_safe}') WHERE regexp_replace(cast({cand} as VARCHAR),'[^0-9]','') = '{num}'"
             n = duckdb.sql(q).to_df()['n'].iloc[0]
             if int(n)>0:
                 matched_files.append(f.name)
@@ -547,8 +551,9 @@ def buscar_empresas_por_socio(nome_socio: str) -> Optional[pd.DataFrame]:
         if cand is None:
             raise ValueError('coluna de nome de sócio não encontrada')
         select_cols = ', '.join([c for c in [cnpj_col, cand + ' as nome_socio', qual_col] if c])
+        path_soc = str(Config.ARQUIVOS_PARQUET['socios']).replace('\\', '/')
         q = (
-            f"SELECT {select_cols} FROM read_parquet('{str(Config.ARQUIVOS_PARQUET['socios']).replace('\\','/')}') "
+            f"SELECT {select_cols} FROM read_parquet('{path_soc}') "
             f"WHERE lower({cand}) LIKE lower('%{nome_socio}%') LIMIT 500"
         )
         df = duckdb.sql(q).to_df()

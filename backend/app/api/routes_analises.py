@@ -1624,7 +1624,8 @@ def api_ai_index_build_from_parquet():
         return jsonify({ 'error': 'tabela inválida' }), 400
     try:
         con = duckdb.connect()
-        con.execute(f"CREATE OR REPLACE VIEW {table} AS SELECT * FROM read_parquet('{str(Config.ARQUIVOS_PARQUET[table]).replace('\\','/')}')")
+        p_table = str(Config.ARQUIVOS_PARQUET[table]).replace('\\', '/')
+        con.execute(f"CREATE OR REPLACE VIEW {table} AS SELECT * FROM read_parquet('{p_table}')")
         where = []
         if uf:
             where.append(f"upper(cast(uf as varchar)) = upper('{str(uf)}')")

@@ -7,6 +7,16 @@ import traceback
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("WSGI_DEBUG")
 
+# === FIX RENDERE/SUPABASE IPV6 ===
+# Força resolução IPv4 para evitar "Network is unreachable" em conexões de banco
+import socket
+_old_getaddrinfo = socket.getaddrinfo
+def _new_getaddrinfo(*args, **kwargs):
+    responses = _old_getaddrinfo(*args, **kwargs)
+    return [r for r in responses if r[0] == socket.AF_INET]
+socket.getaddrinfo = _new_getaddrinfo
+# =================================
+
 print("--- WSGI STARTUP ---", file=sys.stderr)
 print(f"CWD: {os.getcwd()}", file=sys.stderr)
 print(f"PYTHONPATH: {sys.path}", file=sys.stderr)

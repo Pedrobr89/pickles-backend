@@ -24,15 +24,45 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max
 
     # Database
-    # Database
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', f'sqlite:///{BASE_DIR.parent}/users.db')
     
-    # Fix para Render/Supabase: Força uso do Pooler (porta 6543) para evitar erro de IPv6
-    if "supabase.co" in SQLALCHEMY_DATABASE_URI and ":5432" in SQLALCHEMY_DATABASE_URI:
-        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(":5432", ":6543")
+    # Fix para Render/Supabase:
+    # 1. Garante uso da porta 6543 (Pooler)
+    # 2. Resolve hostname para IPv4 explicitamente (Psycopg2 bug bypass)
+    try:
+        if "supabase.co" in SQLALCHEMY_DATABASE_URI:
+            import socket
+            from urllib.parse import urlparse, urlunparse
+
+            # Se estiver na porta 5432, move para 6543
+            if ":5432" in SQLALCHEMY_DATABASE_URI:
+                SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(":5432", ":6543")
+
+            # Resolve DNS para IPv4
+            # Isso força o psycopg2 a conectar no IP direto, ignorando a pilha IPv6 do sistema
+            parsed = urlparse(SQLALCHEMY_DATABASE_URI)
+            host = parsed.hostname
+            if host:
+                # Pega o primeiro IP IPv4 disponível
+                infos = socket.getaddrinfo(host, None, family=socket.AF_INET, type=socket.SOCK_STREAM)
+                if infos:
+                    ip = infos[0][4][0]
+                    # Reconstrói a URL trocando hostname pelo IP [IPv4]
+                    # urlparse coloca user:pass@host:port em netloc
+                    # Vamos substituir apenas o host na string netloc
+                    
+                    new_netloc = parsed.netloc.replace(host, f"{ip}")
+                    # Se tiver porta, ela já está em netloc e será preservada
+                    
+                    SQLALCHEMY_DATABASE_URI = parsed._replace(netloc=new_netloc).geturl()
+                    print(f"WSGI Fix: DNS resolvido para {ip} (IPv4)", flush=True)
+
+    except Exception as e:
+        print(f"WSGI Fix Error: {e}", flush=True)
 
     if SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
         SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace("postgres://", "postgresql://", 1)
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # CORS

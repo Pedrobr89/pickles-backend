@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Pickles Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar (Igual ao App Principal) -->
+        <aside class="w-64 bg-[#0f172a] text-slate-300 flex flex-col flex-shrink-0 transition-all duration-300 z-20">
+            <!-- Logo -->
+            <div class="h-16 flex items-center gap-3 px-6 pr-4 border-b border-slate-700/50">
+                <div
+                    class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 shadow-lg shadow-blue-900/50">
+                    <span class="text-white font-bold text-xl leading-none">P</span>
+                </div>
+                <div class="overflow-hidden">
+                    <h1 class="font-bold text-base text-slate-100 whitespace-nowrap leading-tight">Pickles</h1>
+                    <p class="text-[10px] text-blue-400 font-medium uppercase tracking-wider">Admin Console</p>
+                </div>
+            </div>
+
+            <!-- Nav -->
+            <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-900/20">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span class="text-sm font-medium">Dashboard</span>
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span class="text-sm font-medium">Usuários</span>
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    <span class="text-sm font-medium">Financeiro</span>
+                </a>
+                <div class="pt-4 mt-4 border-t border-slate-800">
+                    <div class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Sistema</div>
+                    <a href="#"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <activity path="M22 12h-4l-3 9L9 3l-3 9H2"></activity>
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Logs de Erro</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                            </path>
+                        </svg>
+                        <span class="text-sm font-medium">Configurações</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- User -->
+            <div class="p-4 border-t border-slate-700/50">
+                <div class="flex items-center gap-3">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=3b82f6&color=fff" alt="Admin"
+                        class="w-9 h-9 rounded-lg">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate">Administrador</p>
+                        <p class="text-xs text-slate-500 truncate">admin@pickles.com</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col min-w-0 bg-slate-50/50">
+            <!-- Header -->
+            <header class="h-16 flex items-center justify-between px-8 bg-white border-b border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800">Visão Geral</h2>
+                <div class="flex items-center gap-4">
+                    <a href="/app"
+                        class="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M15 3h6v18h-6M10 17l5-5-5-5M13.8 12H3" />
+                        </svg>
+                        Voltar para o App
+                    </a>
+                    <div class="h-6 w-px bg-slate-200"></div>
+                    <button onclick="Auth.logout()"
+                        class="text-sm font-medium text-red-600 hover:text-red-700 transition-colors">Sair</button>
+                </div>
+            </header>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-8">
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Stat Card 1 -->
+                    <div
+                        class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </div>
+                            <span
+                                class="flex items-center text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">+12%</span>
+                        </div>
+                        <div class="text-3xl font-bold text-slate-900 mb-1" id="total-users">-</div>
+                        <div class="text-sm text-slate-500">Usuários Totais</div>
+                    </div>
+
+                    <!-- Stat Card 2 -->
+                    <div
+                        class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-4">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                </svg>
+                            </div>
+                            <span
+                                class="flex items-center text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">+5
+                                hoje</span>
+                        </div>
+                        <div class="text-3xl font-bold text-slate-900 mb-1" id="new-users">-</div>
+                        <div class="text-sm text-slate-500">Novos Cadastros</div>
+                    </div>
+
+                    <!-- Stat Card 3 -->
+                    <div
+                        class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-4">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                    </polygon>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-medium text-slate-400">Conversão 0%</span>
+                        </div>
+                        <div class="text-3xl font-bold text-slate-900 mb-1" id="active-subs">-</div>
+                        <div class="text-sm text-slate-500">Assinaturas Pro</div>
+                    </div>
+
+                    <!-- Stat Card 4 -->
+                    <div
+                        class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-4">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-medium text-slate-400">Mensal</span>
+                        </div>
+                        <div class="text-3xl font-bold text-slate-900 mb-1" id="mrr">-</div>
+                        <div class="text-sm text-slate-500">Receita Recorrente</div>
+                    </div>
+                </div>
+
+                <!-- Recent Users Table -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+                    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white">
+                        <div>
+                            <h3 class="font-bold text-slate-800">Usuários Recentes</h3>
+                            <p class="text-sm text-slate-500 mt-0.5">Gerencie os últimos cadastros na plataforma.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button
+                                class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors">Filtros</button>
+                            <button
+                                class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm shadow-blue-500/20">Exportar
+                                CSV</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-slate-500 uppercase bg-slate-50/50 border-b border-slate-100">
+                                <tr>
+                                    <th class="px-6 py-4 font-semibold">User ID</th>
+                                    <th class="px-6 py-4 font-semibold">Usuário</th>
+                                    <th class="px-6 py-4 font-semibold">Plano</th>
+                                    <th class="px-6 py-4 font-semibold">Uso / Dia</th>
+                                    <th class="px-6 py-4 font-semibold">Status</th>
+                                    <th class="px-6 py-4 font-semibold">Cadastro</th>
+                                    <th class="px-6 py-4 font-semibold text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body" class="divide-y divide-slate-100">
+                                <!-- JS Fill -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await Auth.checkAuth();
+
+            // Check Access
+            if (!user) window.location.href = '/login';
+            // if(!user.is_admin) { alert('Acesso negado'); window.location.href = '/app'; }
+
+            // Fetch Stats
+            try {
+                const resStats = await fetch('/api/admin/stats');
+                if (resStats.ok) {
+                    const stats = await resStats.json();
+                    document.getElementById('total-users').textContent = stats.total_users;
+                    document.getElementById('new-users').textContent = stats.new_users_today;
+                    document.getElementById('active-subs').textContent = stats.active_subs;
+                    document.getElementById('mrr').textContent = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.mrr);
+                }
+            } catch (e) {
+                console.error("Erro ao carregar stats", e);
+            }
+
+            // Fetch Users
+            try {
+                const resUsers = await fetch('/api/admin/users');
+                if (resUsers.ok) {
+                    const data = await resUsers.json();
+                    renderUsers(data.users || []);
+                }
+            } catch (e) {
+                console.error("Erro ao carregar usuarios", e);
+            }
+
+            function renderUsers(users) {
+                const tbody = document.getElementById('users-table-body');
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center">Nenhum usuário encontrado.</td></tr>';
+                    return;
+                }
+
+                function escapeHtml(text) {
+                    if (!text) return text;
+                    return text
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;")
+                        .replace(/"/g, "&quot;")
+                        .replace(/'/g, "&#039;");
+                }
+
+                tbody.innerHTML = users.map(u => {
+                    const safeEmail = escapeHtml(u.email);
+                    let badgeClass = '';
+                    if (u.plan === 'Pro') badgeClass = 'bg-blue-100 text-blue-700';
+                    else if (u.plan === 'Enterprise') badgeClass = 'bg-purple-100 text-purple-700';
+                    else badgeClass = 'bg-slate-100 text-slate-700';
+
+                    let statusClass = u.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700';
+
+                    // Generate avatar from email/name
+                    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.email)}&background=random&color=fff`;
+
+                    return `
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
+                        <td class="px-6 py-4 font-mono text-xs text-slate-400">#${String(u.id).padStart(4, '0')}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <img src="${avatarUrl}" class="w-8 h-8 rounded-full border border-slate-200">
+                                <div>
+                                    <div class="font-medium text-slate-900">${safeEmail}</div>
+                                    <div class="text-xs text-slate-500">${u.is_admin ? 'Administrador' : 'Usuário'}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${badgeClass}">${u.plan}</span></td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-blue-500 rounded-full" style="width: ${Math.min(u.usage || 0, 100)}%"></div>
+                                </div>
+                                <span class="text-xs text-slate-600 font-medium">${u.usage || 0}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-xs font-medium border border-transparent ${statusClass}">${u.status}</span></td>
+                        <td class="px-6 py-4 text-slate-500 text-xs">${u.created_at}</td>
+                        <td class="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="p-1 text-slate-400 hover:text-blue-600 transition-colors">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `}).join('');
+            }
+        });
+    </script>
+</body>
+
+</html>

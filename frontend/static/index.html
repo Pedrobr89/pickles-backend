@@ -5547,7 +5547,7 @@
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg >
             Buscando...
-                    `;
+        `;
                     }
 
                     const digits = term.replace(/\D/g, '');
@@ -5583,7 +5583,74 @@
                     if (e.key === 'Enter') handleSearch();
                 };
             }
-        })();
+        });
+
+        // ==================== SIDEBAR TOGGLE FUNCTIONALITY ====================
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarToggleIcon = document.getElementById('sidebar-toggle-icon');
+        const mainContent = document.getElementById('main-content');
+        
+        let sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        
+        function updateSidebarState() {
+            if (sidebarCollapsed) {
+                // Sidebar recolhida
+                sidebar.style.width = '80px';
+                mainContent.style.marginLeft = '80px';
+                
+                // Esconder textos
+                document.querySelectorAll('.sidebar-text').forEach(el => {
+                    el.style.opacity = '0';
+                    el.style.display = 'none';
+                });
+                
+                // Rotacionar ícone
+                sidebarToggleIcon.style.transform = 'rotate(180deg)';
+            } else {
+                // Sidebar expandida
+                sidebar.style.width = '280px';
+                mainContent.style.marginLeft = '280px';
+                
+                // Mostrar textos
+                setTimeout(() => {
+                    document.querySelectorAll('.sidebar-text').forEach(el => {
+                        el.style.display = '';
+                        el.style.opacity = '1';
+                    });
+                }, 150);
+                
+                // Rotacionar ícone
+                sidebarToggleIcon.style.transform = 'rotate(0deg)';
+            }
+            
+            // Salvar estado
+            localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
+        }
+        
+        // Event listener do botão de toggle
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebarCollapsed = !sidebarCollapsed;
+                updateSidebarState();
+            });
+        }
+        
+        // Aplicar estado inicial
+        updateSidebarState();
+        
+        // Adicionar CSS para transições suaves
+        const style = document.createElement('style');
+        style.textContent = `
+            .sidebar - text {
+            transition: opacity 0.3s ease -in -out;
+        }
+        #sidebar - toggle - icon {
+            transition: transform 0.3s ease -in -out;
+        }
+        `;
+        document.head.appendChild(style);
+
     </script>
 </body>
 <!--

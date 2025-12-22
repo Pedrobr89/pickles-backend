@@ -5290,6 +5290,98 @@
                         return;
                     }
 
+                    function showDashboardView(viewName) {
+            document.querySelectorAll('.dashboard-view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(viewName)?.classList.remove('hidden');
+        }
+
+        // ==================== NAVIGATION EVENT LISTENERS ====================
+        // Conectar navegação do sidebar com funções show
+        document.addEventListener('DOMContentLoaded', () => {
+            // Home / Assistente
+            const navHome = document.getElementById('nav-home');
+            if (navHome) navHome.addEventListener('click', (e) => {
+                e.preventDefault();
+                showAssistant();
+            });
+
+            // CNPJ
+            const navCnpj = document.getElementById('nav-cnpj');
+            if (navCnpj) navCnpj.addEventListener('click', (e) => {
+                e.preventDefault();
+                showCnpj();
+            });
+
+            // B2B / Mercado
+            const navB2b = document.getElementById('nav-b2b');
+            if (navB2b) navB2b.addEventListener('click', (e) => {
+                e.preventDefault();
+                showB2B();
+            });
+
+            // B2G
+            const navB2g = document.getElementById('nav-b2g');
+            if (navB2g) navB2g.addEventListener('click', (e) => {
+                e.preventDefault();
+                showB2G();
+            });
+
+            // Análise Setorial
+            const navSetorial = document.getElementById('nav-setorial');
+            if (navSetorial) navSetorial.addEventListener('click', (e) => {
+                e.preventDefault();
+                showMercado();
+            });
+
+            // Plano
+            const navPlano = document.getElementById('nav-plano');
+            if (navPlano) navPlano.addEventListener('click', (e) => {
+                e.preventDefault();
+                showPlans();
+            });
+
+            // Configurações
+            const navConfig = document.getElementById('nav-config');
+            if (navConfig) navConfig.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSettings();
+            });
+
+            // Logout
+            const navLogout = document.getElementById('nav-logout');
+            if (navLogout) navLogout.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (confirm('Deseja realmente sair?')) {
+                    window.location.href = '/';
+                }
+            });
+
+            // Mini sidebar (mobile/collapsed)
+            const miniOpen = document.getElementById('mini-open');
+            if (miniOpen) miniOpen.addEventListener('click', () => {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) sidebar.classList.remove('hidden');
+            });
+
+            const miniAssistente = document.getElementById('mini-assistente');
+            if (miniAssistente) miniAssistente.addEventListener('click', showAssistant);
+
+            const miniMercado = document.getElementById('mini-mercado');
+            if (miniMercado) miniMercado.addEventListener('click', showMercado);
+
+            const miniCnpj = document.getElementById('mini-cnpj');
+            if (miniCnpj) miniCnpj.addEventListener('click', showCnpj);
+
+            const miniB2g = document.getElementById('mini-b2g');
+            if (miniB2g) miniB2g.addEventListener('click', showB2G);
+
+            const miniB2b = document.getElementById('mini-b2b');
+            if (miniB2b) miniB2b.addEventListener('click', showB2B);
+
+            console.log('✅ Navigation listeners attached');
+        });
+
+        // CNPJ Page Logic
                     // Mostrar loading
                     if (cnpjProfile) cnpjProfile.classList.add('hidden');
                     if (cnpjLoading) cnpjLoading.classList.remove('hidden');

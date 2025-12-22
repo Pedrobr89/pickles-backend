@@ -23,7 +23,7 @@ logging.basicConfig(
 )
 
 from app.core.database import db
-from app.core.extensions import login_manager, oauth
+from app.core.extensions import login_manager, oauth, mail
 from app.models.user_model import User
 import os
 
@@ -79,6 +79,10 @@ def create_app(config_name='development'):
     # Inicializa OAuth
     configure_oauth(app)
     
+    # Inicializa Flask-Mail
+    mail.init_app(app)
+    logger.info("✓ Flask-Mail inicializado")
+    
     # Inicializa Login Manager
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login' # type: ignore
@@ -95,6 +99,7 @@ def create_app(config_name='development'):
     from app.api.routes_admin import admin_bp
     from app.api.routes_user import user_bp
     from app.api.routes_payments import payments_bp
+    from app.api.routes_favoritos import bp as favoritos_bp
 
     app.register_blueprint(consultas_bp, url_prefix='/api/consulta')
     app.register_blueprint(analises_bp, url_prefix='/api/analise')
@@ -104,6 +109,7 @@ def create_app(config_name='development'):
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(user_bp, url_prefix='/api/user')
     app.register_blueprint(payments_bp, url_prefix='/api/payments')
+    app.register_blueprint(favoritos_bp) # Já tem url_prefix='/api/favoritos' no blueprint
     logger.info("✓ Blueprints registrados")
 
     # Error Handlers
@@ -156,12 +162,13 @@ def create_app(config_name='development'):
         return send_file(static_path)
 
     @app.route('/', methods=['GET'])
-    def index():
-        # Root agora serve a Landing Page
-        static_path = Path(__file__).parent.parent / 'frontend' / 'static' / 'landing.html'
+    def root():
+        # TEMPORÁRIO: Root serve direto o Dashboard (sem landing, sem login)
+        static_path = Path(__file__).parent.parent / 'frontend' / 'static' / 'index.html'
         return send_file(static_path)
 
     @app.route('/app', methods=['GET'])
+    # @login_required  # TEMPORÁRIO: Desabilitado para debug
     def app_dashboard():
         # /app serve o Dashboard (antigo index)
         static_path = Path(__file__).parent.parent / 'frontend' / 'static' / 'index.html'
@@ -185,6 +192,11 @@ def create_app(config_name='development'):
     @app.route('/recuperar-senha', methods=['GET'])
     def page_forgot_password():
         static_path = Path(__file__).parent.parent / 'frontend' / 'static' / 'forgot_password.html'
+        return send_file(static_path)
+    
+    @app.route('/reset-senha', methods=['GET'])
+    def page_reset_password():
+        static_path = Path(__file__).parent.parent / 'frontend' / 'static' / 'reset_password.html'
         return send_file(static_path)
 
     @app.route('/termos', methods=['GET'])

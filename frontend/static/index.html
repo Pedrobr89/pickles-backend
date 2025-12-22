@@ -4162,12 +4162,12 @@
             inner.innerHTML = `
                         < button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ${prevDisabled ? 'opacity-50' : ''}" data - page="prev" ${ prevDisabled }> Anterior</button >
                             ${
-                                pages.map(p => {
-                                    if (p === '...') return `<span class="px-2">...</span>`;
-                                    const isCurrent = p === b2bCurrentPage;
-                                    const cls = isCurrent ? 'px-3 py-2 bg-blue-600 text-white rounded-lg' : 'px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50';
-                                    return `<button class="${cls}" data-page="${p}">${p}</button>`;
-                                }).join('')
+                        pages.map(p => {
+                            if (p === '...') return `<span class="px-2">...</span>`;
+                            const isCurrent = p === b2bCurrentPage;
+                            const cls = isCurrent ? 'px-3 py-2 bg-blue-600 text-white rounded-lg' : 'px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50';
+                            return `<button class="${cls}" data-page="${p}">${p}</button>`;
+                        }).join('')
                     }
                     <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ${nextDisabled ? 'opacity-50' : ''}" data-page="next" ${nextDisabled}>Próximo</button>
                     `;

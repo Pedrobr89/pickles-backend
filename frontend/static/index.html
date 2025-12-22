@@ -84,8 +84,8 @@
     <!-- Login Screen Overlay removed (using login.html) -->
     <!-- Header -->
     <header id="header"
-        class="fixed top-0 right-0 left-0 md:ml-72 h-16 z-30 flex items-center justify-between px-6 glass transition-all duration-300">
-        <div class="flex items-center gap-4">
+        class="fixed top-0 right-0 left-0 md:ml-72 h-16 z-30 flex items-center justify-between px-6 transition-all duration-300 pointer-events-none">
+        <div class="flex items-center gap-4 pointer-events-auto">
             <button id="menu-button"
                 class="md:hidden p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -94,9 +94,9 @@
                     <line x1="3" y1="18" x2="21" y2="18"></line>
                 </svg>
             </button>
-            <h1 class="text-lg font-semibold text-slate-800" id="page-title">Dashboard</h1>
+            <h1 class="text-lg font-semibold text-slate-800 hidden" id="page-title">Dashboard</h1>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 pointer-events-auto">
             <div class="relative">
                 <button id="btn-notifications" class="p-2 text-slate-400 hover:text-blue-600 transition-colors relative"
                     title="Notificações">
@@ -160,12 +160,12 @@
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                     <polyline points="16 17 21 12 16 7"></polyline>
                     <line x1="21" y1="12" x2="9" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
                 </svg>
                 Sair
             </button>
         </div>
     </header>
-    <div id="header-spacer" class="h-16"></div>
 
     <div id="sidebar-backdrop"
         class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm opacity-0 transition-opacity duration-300 pointer-events-none z-40 lg:hidden">
@@ -366,7 +366,7 @@
 
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col items-center justify-center px-4 pb-32" id="main-content">
+    <main class="flex-1 flex flex-col items-center justify-start pt-6 px-4 pb-32" id="main-content">
 
         <!-- Welcome Screen -->
         <div id="welcome-screen" class="w-full max-w-3xl mx-auto text-center">
@@ -2998,7 +2998,10 @@
                 if (el('d-taxa-saida')) el('d-taxa-saida').textContent = tSaida != null ? `${tSaida.toFixed(2)}%` : '—%';
                 const idade = typeof cards.idade_media === 'number' ? cards.idade_media : null;
                 if (el('d-idade-media')) el('d-idade-media').textContent = idade != null ? `${idade.toFixed(1)} anos` : '— anos';
-                if (el('d-sobrevivencia')) el('d-sobrevivencia').textContent = '—%';
+
+                // Survival rate from backend (real data)
+                const survivalRate = typeof cards.taxa_sobrevivencia === 'number' ? cards.taxa_sobrevivencia : null;
+                if (el('d-sobrevivencia')) el('d-sobrevivencia').textContent = survivalRate != null ? `${survivalRate.toFixed(1)}%` : '—%';
 
                 const evol = ((geralData && geralData.graficos && geralData.graficos.evolucao_ativas) ? geralData.graficos.evolucao_ativas : {}) || {};
 
@@ -3013,12 +3016,13 @@
                     }
                 }
 
-                // Gráfico de distribuição por idade (simulado com dados de entradas)
-                if (el('d-idade-dist') && Array.isArray(cards.entradas_mensais) && cards.entradas_mensais.length > 0) {
-                    const ageRanges = ['0-1 ano', '1-3 anos', '3-5 anos', '5-10 anos', '10+ anos'];
-                    const ageValues = [15, 25, 30, 20, 10]; // Valores simulados - idealmente viriam do backend
+                // Gráfico de distribuição por idade (REAL DATA from backend)
+                const idadeDist = ((geralData && geralData.graficos && geralData.graficos.idade_distribuicao) ? geralData.graficos.idade_distribuicao : {}) || {};
+                if (el('d-idade-dist') && Array.isArray(idadeDist.labels) && idadeDist.labels.length > 0) {
+                    const ageLabels = idadeDist.labels;
+                    const ageValues = (idadeDist.valores || []).map(v => parseInt(v) || 0);
                     renderChart('d-idade-dist', 'bar', {
-                        labels: ageRanges,
+                        labels: ageLabels,
                         datasets: [{
                             label: 'Empresas',
                             data: ageValues,
@@ -3041,38 +3045,34 @@
         function renderComercial(geralData) {
             try {
                 const el = (id) => document.getElementById(id);
-                if (el('c-exportadores')) el('c-exportadores').textContent = '—';
-                if (el('c-maturidade')) el('c-maturidade').textContent = '—%';
+                const cards = (geralData && geralData.cards) || {};
+
+                // Export potential (REAL DATA from backend)
+                const exportPct = typeof cards.potencial_exportacao_pct === 'number' ? cards.potencial_exportacao_pct : null;
+                if (el('c-exportadores')) el('c-exportadores').textContent = exportPct != null ? `${exportPct.toFixed(1)}%` : '—';
+
+                // Market maturity index (REAL DATA from backend)
+                const maturityIndex = typeof cards.indice_maturidade === 'number' ? cards.indice_maturidade : null;
+                if (el('c-maturidade')) el('c-maturidade').textContent = maturityIndex != null ? `${maturityIndex.toFixed(1)}%` : '—%';
+
                 if (el('c-compradores')) el('c-compradores').textContent = '—%';
                 if (el('c-parceiros')) el('c-parceiros').textContent = '—';
 
                 const ranking = (geralData && geralData.ranking) || {};
                 const setores = Array.isArray(ranking.setores_top) ? ranking.setores_top.slice(0, 8) : [];
 
-                // Gráfico de barras para exportadores por CNAE (usando dados de setores como proxy)
-                if (el('c-exportadores-cnae') && setores.length > 0) {
-                    const labels = setores.map(s => String(s.label || '—').substring(0, 15));
-                    const values = setores.map(s => Math.floor((parseInt(s.count || 0) * Math.random() * 0.3))); // Simulado
-                    renderGraficoBarra('c-exportadores-cnae', labels, values, 'Exportadores', '#10b981');
+                // Export potential visualization by CNAE (simplified - just show export %)
+                if (el('c-exportadores-cnae') && exportPct != null) {
+                    // Display export % as text since we don't have per-CNAE breakdown
+                    el('c-exportadores-cnae').innerHTML = `<div class="flex items-center justify-center h-64"><div class="text-center"><div class="text-6xl font-bold text-emerald-600">${exportPct.toFixed(1)}%</div><div class="text-sm text-slate-500 mt-2">Potencial de Exportação</div></div></div>`;
                 } else if (el('c-exportadores-cnae')) {
                     el('c-exportadores-cnae').textContent = '—';
                 }
 
-                // Gráfico radar para maturidade empresarial
-                if (el('c-maturidade-radar')) {
-                    const labels = ['Tecnologia', 'Processos', 'Pessoas', 'Inovação', 'Sustentabilidade', 'Governança'];
-                    const values = [65, 72, 58, 45, 50, 68]; // Valores simulados
-                    renderGraficoRadar('c-maturidade-radar', labels, [{
-                        label: 'Maturidade',
-                        data: values,
-                        borderColor: '#8b5cf6',
-                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#8b5cf6',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: '#8b5cf6'
-                    }]);
+                // Maturity index visualization (gauge-style)
+                if (el('c-maturidade-radar') && maturityIndex != null) {
+                    const color = maturityIndex >= 70 ? '#10b981' : maturityIndex >= 50 ? '#f59e0b' : '#ef4444';
+                    el('c-maturidade-radar').innerHTML = `<div class="flex items-center justify-center h-64"><div class="text-center"><div class="text-6xl font-bold" style="color: ${color}">${maturityIndex.toFixed(0)}</div><div class="text-sm text-slate-500 mt-2">Índice de Maturidade (0-100)</div></div></div>`;
                 } else if (el('c-maturidade-radar')) {
                     el('c-maturidade-radar').textContent = '—';
                 }
@@ -3354,18 +3354,91 @@
             }
         }
 
+        // ================================
+        // EVENT LISTENERS PARA B2G ENHANCEMENTS
+        // ================================
+
+        // Event delegation para botões de favorito
+        document.addEventListener('click', async (e) => {
+            const favBtn = e.target.closest('.favorito-btn');
+            if (favBtn) {
+                e.stopPropagation();
+                const licitacaoId = favBtn.getAttribute('data-licitacao-id');
+                const isFav = favoritosB2G.isFavorito(licitacaoId);
+
+                // Encontrar dados da licitação
+                const licitacao = opportunities.find(o =>
+                    (o.id || o.numeroControlePNCP || o.objeto?.substring(0, 50)) === licitacaoId
+                );
+
+                if (isFav) {
+                    await favoritosB2G.remover(licitacaoId);
+                } else if (licitacao) {
+                    await favoritosB2G.adicionar({
+                        id: licitacaoId,
+                        titulo: licitacao.titulo,
+                        orgao: licitacao.orgao,
+                        valor: licitacao.valor
+                    });
+                    ```
+                // Atualizar UI
+                renderB2GList();
+            }
+        });
+
+        // Validação de CNPJ em tempo real no campo B2G
+        let b2gCnpjInputValidator = document.getElementById('b2g-cnpj-input');
+        if (b2gCnpjInputValidator) {
+            // Adicionar elemento de feedback se não existir
+            }
+
+            b2gCnpjInput.addEventListener('input', function () {
+                validarCNPJComFeedback(this);
+            });
+
+            b2gCnpjInput.addEventListener('blur', function () {
+                const resultado = validarCNPJComFeedback(this);
+                if (!resultado.valido && this.value) {
+                    this.classList.add('border-red-500');
+                }
+            });
+        }
+
+        // Mesmo para campo de CNPJ na consulta CNPJ
+        const cnpjSearchInput = document.getElementById('cnpj-search-input');
+        if (cnpjSearchInput) {
+            if (!cnpjSearchInput.nextElementSibling || !cnpjSearchInput.nextElementSibling.classList.contains('cnpj-feedback')) {
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = 'cnpj-feedback mt-2';
+                cnpjSearchInput.parentNode.insertBefore(feedbackDiv, cnpjSearchInput.nextSibling);
+            }
+
+            cnpjSearchInput.addEventListener('input', function () {
+                validarCNPJComFeedback(this);
+            });
+        }
+
+        // ================================
+        // FIM EVENT LISTENERS B2G
+        // ================================
+
+        try {
+            renderB2GList();
+        } catch (e) {
+            console.error('Erro inicial renderB2GList:', e);
+        }
 
 
         async function loadAtivasFromBase() {
             try {
                 setGlobalLoading(true);
-                const res = await fetch(`${apiBase()}/api/analise/kpis/base`);
+                const res = await fetch(`${ apiBase() } /api/analise / kpis / base`);
                 if (!res.ok) { return; }
                 const data = await res.json();
                 const list = ((data && data.top && data.top.situacao_cadastral) ? data.top.situacao_cadastral : []) || [];
                 const ativa = list.find(x => String(x.label).toLowerCase() === 'ativa');
                 try {
-                    const rg = await fetch(`${apiBase()}/api/analise/kpis/geral`);
+                    const rg = await fetch(`${ apiBase() } /api/analise / kpis / geral`);
                     if (rg.ok) {
                         const dj = await rg.json();
                         renderEstrutura(data, dj);
@@ -3436,7 +3509,7 @@
             const uf = (filtrosGlobais && filtrosGlobais.uf) ? filtrosGlobais.uf : (document.getElementById('filter-uf') ? (document.getElementById('filter-uf').value || '').toUpperCase() : '').trim();
             try {
                 setGlobalLoading(true);
-                const urlBase = `${apiBase()}/api/analise/kpis/base`;
+                const urlBase = `${ apiBase() } /api/analise / kpis / base`;
                 const res = await fetch(urlBase);
                 if (!res.ok) { return; }
                 const data = await res.json();
@@ -3446,7 +3519,7 @@
                     const params = new URLSearchParams();
                     if (code) params.set('cnae', code);
                     if (uf) params.set('uf', uf);
-                    const urlGeral = `${apiBase()}/api/analise/kpis/geral${params.toString() ? `?${params.toString()}` : ''}`;
+                    const urlGeral = `${ apiBase() } /api/analise / kpis / geral${ params.toString() ? `?${params.toString()}` : '' } `;
                     const resG = await fetch(urlGeral);
                     if (resG.ok) {
                         const dataG = await resG.json();
@@ -3499,7 +3572,7 @@
             if (loading) {
                 btn.disabled = true;
                 btn.dataset.originalText = btn.dataset.originalText || btn.innerHTML;
-                btn.innerHTML = `<span class="inline-flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.35" stroke-width="3"></circle><path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" stroke-width="3"></path></svg><span>Buscando...</span></span>`;
+                btn.innerHTML = `< span class="inline-flex items-center gap-2" ><svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.35" stroke-width="3"></circle><path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" stroke-width="3"></path></svg><span>Buscando...</span></span > `;
                 btn.classList.add('opacity-80', 'cursor-not-allowed');
             } else {
                 btn.disabled = false;
@@ -3528,7 +3601,7 @@
                     const cnae = normalizeCNAE(document.getElementById('filter-cnae') ? document.getElementById('filter-cnae').value || '' : '');
                     const uf = (document.getElementById('filter-uf') ? (document.getElementById('filter-uf').value || '').toUpperCase() : '').trim();
                     const params = new URLSearchParams(); if (cnae) params.set('cnae', cnae); if (uf) params.set('uf', uf);
-                    const url = `${apiBase()}/api/analise/kpis/geral${params.toString() ? `?${params.toString()}` : ''}`;
+                    const url = `${ apiBase() } /api/analise / kpis / geral${ params.toString() ? `?${params.toString()}` : '' } `;
                     const res = await fetch(url);
                     if (!res.ok) return;
                     const data = await res.json();
@@ -3557,7 +3630,7 @@
                     const cnae = normalizeCNAE(document.getElementById('filter-cnae') ? document.getElementById('filter-cnae').value || '' : '');
                     const uf = (document.getElementById('filter-uf') ? (document.getElementById('filter-uf').value || '').toUpperCase() : '').trim();
                     const params = new URLSearchParams(); if (cnae) params.set('cnae', cnae); if (uf) params.set('uf', uf);
-                    const shareUrl = `${location.origin}${location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+                    const shareUrl = `${ location.origin }${ location.pathname }${ params.toString() ? `?${params.toString()}` : '' } `;
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         await navigator.clipboard.writeText(shareUrl);
                     }
@@ -3673,8 +3746,8 @@
                 const html = items.slice(0, 12).map(it => {
                     const codigo = String(it.codigo || it.code || '').trim();
                     const desc = String(it.descricao || it.desc || '').trim();
-                    const label = codigo ? `${codigo} — ${desc}` : desc;
-                    return `<button type="button" class="w-full text-left px-3 py-2 hover:bg-slate-50 text-sm" data-codigo="${codigo}">${label}</button>`;
+                    const label = codigo ? `${ codigo } — ${ desc } ` : desc;
+                    return `< button type = "button" class="w-full text-left px-3 py-2 hover:bg-slate-50 text-sm" data - codigo="${codigo}" > ${ label }</button > `;
                 }).join('');
                 sugBox.innerHTML = html;
                 sugBox.classList.remove('hidden');
@@ -3695,13 +3768,13 @@
             async function carregarSetores() {
                 try {
                     const base = apiBase();
-                    const url = `${base}/api/analise/cnaes/setores`;
+                    const url = `${ base } /api/analise / cnaes / setores`;
                     const res = await fetch(url);
                     if (res.ok) {
                         const setores = await res.json();
                         if (setorSelect) {
                             setorSelect.innerHTML = '<option value="">🏢 Todos</option>' +
-                                setores.map(s => `<option value="${s}">${s}</option>`).join('');
+                                setores.map(s => `< option value = "${s}" > ${ s }</option > `).join('');
                         }
                     }
                 } catch (e) { console.error('Erro set:', e); }
@@ -3714,8 +3787,8 @@
                     if ((!term || term.trim().length < 2) && !setorVal) { showSuggestions([]); return; }
 
                     const base = apiBase();
-                    let url = `${base}/api/analise/cnaes/sugerir?termo=${encodeURIComponent(term.trim())}`;
-                    if (setorVal) url += `&setor=${encodeURIComponent(setorVal)}`;
+                    let url = `${ base } /api/analise / cnaes / sugerir ? termo = ${ encodeURIComponent(term.trim()) } `;
+                    if (setorVal) url += `& setor=${ encodeURIComponent(setorVal) } `;
 
                     const res = await fetch(url);
                     const js = res.ok ? await res.json() : [];
@@ -3870,7 +3943,7 @@
                 // Se for CNPJ exato, usa a rota de compatibilidade/busca específica
                 if (cnpj && cnpj.length === 14) {
                     const body = { cnpj_prestador: cnpj, filtros: { uf }, limite: 50 };
-                    const res = await fetch(`${base}/api/analise/compat/empresas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    const res = await fetch(`${ base } /api/analise / compat / empresas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                     const js = await res.json();
                     const itens = js.resultados || [];
                     const mapped = itens.map(it => {
@@ -3904,7 +3977,7 @@
                 if (ordenacao) params.set('ordem', ordenacao);
                 params.set('pagina', String(b2bCurrentPage));
 
-                const res = await fetch(`${base}/api/analise/players/lista?${params.toString()}`);
+                const res = await fetch(`${ base } /api/analise / players / lista ? ${ params.toString() } `);
                 if (res.ok) {
                     const js = await res.json();
                     const data = js.data || [];
@@ -4038,7 +4111,7 @@
             const matchCls = getMatchColor(match);
 
             return `
-            <tr class="hover:bg-slate-50 transition-colors group">
+                        < tr class="hover:bg-slate-50 transition-colors group" >
                 <td class="px-6 py-4">
                     <div class="flex flex-col">
                         <span class="font-bold text-slate-800 text-[15px] truncate max-w-[280px]" title="${c.nomeFantasia}">${c.nomeFantasia}</span>
@@ -4071,7 +4144,7 @@
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
                 </td>
-            </tr>`;
+            </tr > `;
         }
         function renderB2BPagination(totalPages) {
             if (!b2bPagination) return;
@@ -4087,15 +4160,17 @@
             if (end < totalPages - 1) pages.push('...');
             if (totalPages > 1) pages.push(totalPages);
             inner.innerHTML = `
-                <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ${prevDisabled ? 'opacity-50' : ''}" data-page="prev" ${prevDisabled}>Anterior</button>
-                ${pages.map(p => {
-                if (p === '...') return `<span class="px-2">...</span>`;
-                const isCurrent = p === b2bCurrentPage;
-                const cls = isCurrent ? 'px-3 py-2 bg-blue-600 text-white rounded-lg' : 'px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50';
-                return `<button class="${cls}" data-page="${p}">${p}</button>`;
-            }).join('')}
-                <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ${nextDisabled ? 'opacity-50' : ''}" data-page="next" ${nextDisabled}>Próximo</button>
-            `;
+                        < button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ${prevDisabled ? 'opacity-50' : ''}" data - page="prev" ${ prevDisabled }> Anterior</button >
+                            ${
+                                pages.map(p => {
+                                    if (p === '...') return `<span class="px-2">...</span>`;
+                                    const isCurrent = p === b2bCurrentPage;
+                                    const cls = isCurrent ? 'px-3 py-2 bg-blue-600 text-white rounded-lg' : 'px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50';
+                                    return `<button class="${cls}" data-page="${p}">${p}</button>`;
+                                }).join('')
+                    }
+                    <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ${nextDisabled ? 'opacity-50' : ''}" data-page="next" ${nextDisabled}>Próximo</button>
+                    `;
             Array.from(inner.querySelectorAll('button[data-page]')).forEach(btn => {
                 btn.addEventListener('click', () => {
                     const data = btn.getAttribute('data-page');
@@ -4148,12 +4223,12 @@
                 try {
                     b2bSearchBtn.disabled = true;
                     b2bSearchBtn.innerHTML = `
-                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        < svg class="animate-spin h-5 w-5 text-white" xmlns = "http://www.w3.org/2000/svg" fill = "none" viewBox = "0 0 24 24" >
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                        </svg>
+                        </svg >
                         Buscando...
-                    `;
+        `;
                     b2bCurrentPage = 1;
                     await renderB2BList();
                 } finally {
@@ -4178,6 +4253,204 @@
                 renderB2BList();
             });
         }
+
+        // ================================
+        // B2G ENHANCEMENTS - SPRINT 1
+        // ================================
+
+        /**
+         * Calcula status da licitação e retorna tag HTML com countdown
+         */
+        function getStatusTag(prazo) {
+            try {
+                if (!prazo) return { html: '<span class="px-2 py-1 bg-gray-400 text-white text-xs rounded-lg">Sem prazo</span>', dias: null };
+
+                const hoje = new Date();
+                const dataFechamento = new Date(prazo);
+                const diasRestantes = Math.ceil((dataFechamento - hoje) / (1000 * 60 * 60 * 24));
+
+                if (diasRestantes < 0) {
+                    return {
+                        html: '<span class="px-2 py-1 bg-gray-500 text-white text-xs rounded-lg">Encerrada</span>',
+                        dias: diasRestantes
+                    };
+                } else if (diasRestantes === 0) {
+                    return {
+                        html: '<span class="px-2 py-1 bg-red-600 text-white text-xs rounded-lg animate-pulse font-bold">⚠️ Hoje!</span>',
+                        dias: 0
+                    };
+                } else if (diasRestantes <= 3) {
+                    return {
+                        html: `< span class= "px-2 py-1 bg-red-500 text-white text-xs rounded-lg animate-pulse" >🔥 ${ diasRestantes }d</span > `,
+                        dias: diasRestantes
+                    };
+                } else if (diasRestantes <= 7) {
+                    return {
+                        html: `< span class= "px-2 py-1 bg-orange-500 text-white text-xs rounded-lg" >⏰ ${ diasRestantes }d</span > `,
+                        dias: diasRestantes
+                    };
+                } else if (diasRestantes <= 15) {
+                    return {
+                        html: `< span class= "px-2 py-1 bg-yellow-500 text-gray-900 text-xs rounded-lg" > ${ diasRestantes } dias</span > `,
+                        dias: diasRestantes
+                    };
+                } else {
+                    return {
+                        html: `< span class= "px-2 py-1 bg-green-500 text-white text-xs rounded-lg" >✓ ${ diasRestantes } dias</span > `,
+                        dias: diasRestantes
+                    };
+                }
+            } catch {
+                return { html: '<span class="px-2 py-1 bg-gray-400 text-white text-xs rounded-lg">—</span>', dias: null };
+            }
+        }
+
+        /**
+         * Retorna classe CSS baseada no score de match
+         */
+        function getMatchColor(match) {
+            const m = parseInt(match) || 0;
+            if (m >= 80) return 'text-green-600 bg-green-50';
+            if (m >= 60) return 'text-blue-600 bg-blue-50';
+            if (m >= 40) return 'text-orange-600 bg-orange-50';
+            return 'text-gray-600 bg-gray-50';
+        }
+
+        /**
+         * Retorna ícone e texto para chance de sucesso
+         */
+        function getChanceSucessoTag(match) {
+            const m = parseInt(match) || 0;
+            if (m >= 80) return '🎯 Alta chance';
+            if (m >= 60) return '⭐ Média chance';
+            if (m >= 40) return '💡 Possível';
+            return '⚠️ Baixa chance';
+        }
+
+        /**
+         * Valida CNPJ e retorna feedback visual
+         */
+        function validarCNPJComFeedback(cnpjInput) {
+            const cnpj = cnpjInput.value.replace(/\\D/g, '');
+            const feedbackEl = cnpjInput.nextElementSibling;
+
+            if (cnpj.length === 0) {
+                cnpjInput.classList.remove('border-green-500', 'border-red-500');
+                if (feedbackEl) feedbackEl.innerHTML = '';
+                return { valido: false, cnpj: '' };
+            }
+
+            if (cnpj.length === 14) {
+                cnpjInput.classList.remove('border-red-500');
+                cnpjInput.classList.add('border-green-500');
+                if (feedbackEl) {
+                    feedbackEl.innerHTML = '<span class="text-green-600 text-xs">✓ CNPJ válido</span>';
+                }
+                return { valido: true, cnpj };
+            } else {
+                cnpjInput.classList.remove('border-green-500');
+                cnpjInput.classList.add('border-red-500');
+                if (feedbackEl) {
+                    feedbackEl.innerHTML = `< span class= "text-red-600 text-xs" >⚠ Digite 14 dígitos(${ cnpj.length } / 14)</span > `;
+                }
+                return { valido: false, cnpj };
+            }
+        }
+
+        // Sistema de Favoritos
+        const favoritosB2G = {
+            storage: 'b2g_favoritos',
+
+            getFavoritos() {
+                try {
+                    return JSON.parse(localStorage.getItem(this.storage) || '[]');
+                } catch {
+                    return [];
+                }
+            },
+
+            isFavorito(licitacaoId) {
+                return this.getFavoritos().some(f => f.id === licitacaoId);
+            },
+
+            async adicionar(licitacao) {
+                try {
+                    // Salvar localmente
+                    const favoritos = this.getFavoritos();
+                    if (!favoritos.some(f => f.id === licitacao.id)) {
+                        favoritos.push({
+                            id: licitacao.id,
+                            titulo: licitacao.titulo,
+                            orgao: licitacao.orgao,
+                            valor: licitacao.valor,
+                            adicionadoEm: new Date().toISOString()
+                        });
+                        localStorage.setItem(this.storage, JSON.stringify(favoritos));
+                    }
+
+                    // Enviar para API (se disponível)
+                    try {
+                        await fetch(`${ apiBase() } / api / favoritos / licitacao`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                licitacao_id: licitacao.id,
+                                licitacao_data: licitacao
+                            })
+                        });
+                    } catch (e) {
+                        console.warn('API favoritos indisponível:', e);
+                    }
+
+                    return true;
+                } catch (e) {
+                    console.error('Erro ao adicionar favorito:', e);
+                    return false;
+                }
+            },
+
+            async remover(licitacaoId) {
+                try {
+                    // Remover localmente
+                    const favoritos = this.getFavoritos().filter(f => f.id !== licitacaoId);
+                    localStorage.setItem(this.storage, JSON.stringify(favoritos));
+
+                    // Remover da API
+                    try {
+                        await fetch(`${ apiBase() } / api / favoritos / licitacao / ${ licitacaoId }`, {
+                            method: 'DELETE'
+                        });
+                    } catch (e) {
+                        console.warn('API favoritos indisponível:', e);
+                    }
+
+                    return true;
+                } catch (e) {
+                    console.error('Erro ao remover favorito:', e);
+                    return false;
+                }
+            },
+
+            getIconeHTML(licitacaoId) {
+                const isFav = this.isFavorito(licitacaoId);
+                return `
+        < button 
+                        class= "favorito-btn p-2 rounded-lg hover:bg-slate-100 transition-colors" 
+                        data - licitacao - id="${licitacaoId}"
+                        title = "${isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}"
+            >
+            <svg class="w-5 h-5 ${isFav ? 'fill-yellow-400 text-yellow-400' : 'text-slate-400'}"
+                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+                    </button >
+            `;
+            }
+        };
+
+        // ================================
+        // FIM B2G ENHANCEMENTS
+        // ================================
 
         const b2gListEl = document.getElementById('b2g-list') || document.getElementById('opportunities-grid');
         const b2gSearch = document.getElementById('b2g-search');
@@ -4204,7 +4477,7 @@
             if (orgao) params.set('orgao', orgao);
             if (modalidade) params.set('modalidade', modalidade);
             try {
-                const url = `${base}/api/analise/pncp/editais?${params.toString()}`;
+                const url = `${ base } / api / analise / pncp / editais ? ${ params.toString() }`;
                 const res = await fetch(url);
                 const js = res.ok ? await res.json() : { data: [] };
                 const data = Array.isArray(js) ? js : (js.data || []);
@@ -4255,15 +4528,15 @@
             if (modalidade) filters.push({ label: modalidade, field: 'modalidade' });
             if (valor) filters.push({ label: valor, field: 'valor' });
             activeFiltersEl.innerHTML = filters.map(f => `
-                <span class="filter-tag inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm">
-                  ${f.label}
-                  <button onclick="removeFilter('${f.field}')" class="hover:text-blue-900">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                  </button>
-                </span>
+        < span class= "filter-tag inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm" >
+        ${ f.label }
+        < button onclick = "removeFilter('${f.field}')" class= "hover:text-blue-900" >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+                  </button >
+                </span >
             `).join('');
         }
         function removeFilter(field) {
@@ -4275,58 +4548,84 @@
             renderB2GList();
         }
         function opportunityCardHtml(o) {
-            const match = parseInt(o.match || 0) || 0;
+            const match = parseInt(o.match || o.score_percent || 0) || 0;
             const matchCls = getMatchColor(match);
-            return `<div class="opportunity-card bg-white rounded-2xl border border-slate-100 p-5 cursor-pointer shadow-sm card-hover group h-full flex flex-col relative overflow-hidden">
+            const statusTag = getStatusTag(o.prazo || o.dataFinal || o.dataAbertura);
+            const chanceSucesso = getChanceSucessoTag(match);
+            const licitacaoId = o.id || o.numeroControlePNCP || o.objeto?.substring(0, 50) || Math.random().toString();
+
+            return `< div class= "opportunity-card bg-white rounded-2xl border border-slate-100 p-5 cursor-pointer shadow-sm card-hover group h-full flex flex-col relative overflow-hidden" >
               <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-slate-50 to-transparent -mr-8 -mt-8 rounded-full opacity-50 pointer-events-none"></div>
+              
+              <!-- Header com Match e Status -->
               <div class="flex items-start justify-between mb-3 relative z-10">
-                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${matchCls} rounded-md border border-current">
-                  ${match}% Match
-                </span>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">${o.uf || 'BR'}</span>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${matchCls} rounded-md border border-current" 
+                        title="Score de compatibilidade: ${match}%\n${o.match_explicacao || 'Baseado em CNAE, porte, localização e histórico'}">
+                    ${match}% Match
+                  </span>
+                  ${statusTag.html}
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">${o.uf || 'BR'}</span>
+                  ${favoritosB2G.getIconeHTML(licitacaoId)}
+                </div>
               </div>
+              
+              <!--Título -->
               <h3 class="font-bold text-slate-800 mb-2 line-clamp-2 text-[15px] leading-snug">${o.titulo}</h3>
-              <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-4">
+              
+              <!--Órgão -->
+              <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 </svg>
                 <span class="truncate font-medium">${o.orgao}</span>
               </div>
-              <div class="mt-auto space-y-3 relative z-10">
-                  <div class="flex items-center justify-between text-xs">
-                    <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-semibold uppercase tracking-wide">
-                      ${o.modalidade}
-                    </span>
-                    <span class="font-bold text-slate-800 text-sm">${formatCurrency(o.valor)}</span>
-                  </div>
-                  <div class="flex items-center justify-between pt-3 border-t border-slate-50">
-                    <div class="flex items-center gap-1 text-[10px] text-slate-400 font-medium uppercase tracking-wide">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              
+              <!--Chance de Sucesso-- >
+              <div class="mb-3 text-xs">
+                <span class="px-2 py-1 bg-slate-50 text-slate-700 rounded-lg font-medium">
+                  ${chanceSucesso}
+                </span>
+              </div>
+              
+              <!--Footer -->
+        <div class="mt-auto space-y-3 relative z-10">
+            <div class="flex items-center justify-between text-xs">
+                <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-semibold uppercase tracking-wide">
+                    ${o.modalidade}
+                </span>
+                <span class="font-bold text-slate-800 text-sm">${formatCurrency(o.valor)}</span>
+            </div>
+            <div class="flex items-center justify-between pt-3 border-t border-slate-50">
+                <div class="flex items-center gap-1 text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="M12 6v6l4 2"></path>
-                      </svg>
-                      Fecha em ${o.prazoDias || o.prazo || '—'}
-                    </div>
-                    <button class="text-blue-600 hover:text-blue-700 text-xs font-bold uppercase tracking-wide">
-                      Ver detalhes
-                    </button>
-                  </div>
-              </div>
-            </div>`;
+                    </svg>
+                    ${statusTag.dias !== null && statusTag.dias >= 0 ? `${statusTag.dias}d restantes` : 'Encerrado'}
+                </div>
+                <button class="text-blue-600 hover:text-blue-700 text-xs font-bold uppercase tracking-wide">
+                    Ver detalhes
+                </button>
+            </div>
+        </div>
+            </div > `;
         }
         function opportunityRowHtml(o) {
-            return `<div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm card-hover mb-2 group">
-                <div class="flex items-center justify-between">
-                    <div class="flex-1 min-w-0 pr-4">
-                        <div class="font-bold text-slate-800 text-[15px] truncate">${o.titulo}</div>
-                        <div class="text-[11px] text-slate-500 font-medium uppercase tracking-wide mt-0.5">${o.orgao} • ${o.modalidade} • ${o.municipio}-${o.uf}</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-sm font-bold text-slate-900">${formatValor(o.valor)}</div>
-                        <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">${o.prazoDias || o.prazo || '—'}</div>
-                    </div>
-                </div>
-            </div>`;
+            return `< div class= "bg-white rounded-2xl border border-slate-100 p-4 shadow-sm card-hover mb-2 group" >
+        <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0 pr-4">
+                <div class="font-bold text-slate-800 text-[15px] truncate">${o.titulo}</div>
+                <div class="text-[11px] text-slate-500 font-medium uppercase tracking-wide mt-0.5">${o.orgao} • ${o.modalidade} • ${o.municipio}-${o.uf}</div>
+            </div>
+            <div class="text-right">
+                <div class="text-sm font-bold text-slate-900">${formatValor(o.valor)}</div>
+                <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">${o.prazoDias || o.prazo || '—'}</div>
+            </div>
+        </div>
+            </div > `;
         }
         function renderB2GPagination(totalPages) {
             if (!b2gPagination) return;
@@ -4342,10 +4641,10 @@
             if (end < totalPages - 1) pages.push('...');
             if (totalPages > 1) pages.push(totalPages);
             inner.innerHTML = `
-                <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ${prevDisabled ? 'opacity-50' : ''}" data-page="prev" ${prevDisabled}>Anterior</button>
-                ${pages.map(p => p === '...' ? `<span class="px-2">...</span>` : `<button class="${p === b2gCurrentPage ? 'px-3 py-2 bg-blue-600 text-white rounded-lg' : 'px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50'}" data-page="${p}">${p}</button>`).join('')}
-                <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ${nextDisabled ? 'opacity-50' : ''}" data-page="next" ${nextDisabled}>Próximo</button>
-            `;
+            < button class= "px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ${prevDisabled ? 'opacity-50' : ''}" data - page="prev" ${ prevDisabled } > Anterior</button >
+        ${ pages.map(p => p === '...' ? `<span class="px-2">...</span>` : `<button class="${p === b2gCurrentPage ? 'px-3 py-2 bg-blue-600 text-white rounded-lg' : 'px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50'}" data-page="${p}">${p}</button>`).join('') }
+        < button class= "px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ${nextDisabled ? 'opacity-50' : ''}" data - page="next" ${ nextDisabled } > Próximo</button >
+        `;
             Array.from(inner.querySelectorAll('button[data-page]')).forEach(btn => {
                 btn.addEventListener('click', () => {
                     const data = btn.getAttribute('data-page');
@@ -4385,7 +4684,7 @@
                     somente_ativas: true
                 };
 
-                const res = await fetch(`${apiBase()}/api/analise/setorial`, {
+                const res = await fetch(`${ apiBase() } / api / analise / setorial`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
@@ -4401,7 +4700,7 @@
                     players = [];
                 }
 
-                if (countEl) countEl.textContent = `${players.length} empresas encontradas`;
+                if (countEl) countEl.textContent = `${ players.length } empresas encontradas`;
 
                 if (players.length === 0) {
                     listEl.innerHTML = '<div class="col-span-full text-center py-10 text-slate-500">Nenhuma empresa encontrada com estes filtros.</div>';
@@ -4420,7 +4719,7 @@
                     const capital = typeof p.capital_social_da_empresa === 'number' ? p.capital_social_da_empresa : 0;
 
                     return `
-                    <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all group">
+        < div class= "bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all group" >
                         <div class="flex items-start justify-between mb-4">
                             <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs uppercase group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                 ${ufP}
@@ -4444,8 +4743,8 @@
                         <button class="w-full mt-4 py-2.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center justify-center gap-2">
                            Ver Detalhes
                         </button>
-                    </div>
-                `}).join('');
+                    </div >
+            `}).join('');
 
             } catch (e) {
                 console.error(e);
@@ -4471,7 +4770,7 @@
             const pageItems = filtered.slice(start, start + B2G_PAGE_SIZE);
             const html = pageItems.map(o => b2gViewMode === 'list' ? opportunityRowHtml(o) : opportunityCardHtml(o)).join('');
             b2gListEl.innerHTML = html;
-            const countEl = document.getElementById('b2g-count'); if (countEl) countEl.textContent = `Mostrando ${filtered.length} oportunidades`;
+            const countEl = document.getElementById('b2g-count'); if (countEl) countEl.textContent = `Mostrando ${ filtered.length } oportunidades`;
             updateActiveFilters();
             renderB2GPagination(totalPages);
         }
@@ -4491,7 +4790,7 @@
         const b2gAnalyzeBtn = document.getElementById('b2g-analyze-btn');
         const b2gCnpjInput = document.getElementById('b2g-cnpj-input');
         const b2gAnalysisResults = document.getElementById('b2g-analysis-results');
-        const b2gTabs = document.querySelectorAll('.b2g-tab');
+        const b2gTabs = Array.from(document.querySelectorAll('.b2g-tab'));
         let b2gActiveTab = 'direct'; // 'direct' or 'indirect'
 
         if (b2gAnalyzeBtn) {
@@ -4504,7 +4803,7 @@
 
                 // Loading State
                 const originalText = b2gAnalyzeBtn.innerHTML;
-                b2gAnalyzeBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Analisando...`;
+                b2gAnalyzeBtn.innerHTML = `< svg class= "animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns = "http://www.w3.org/2000/svg" fill = "none" viewBox = "0 0 24 24" ><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg > Analisando...`;
                 b2gAnalyzeBtn.disabled = true;
 
                 // Simulate Analysis API Call
@@ -4576,7 +4875,7 @@
             const pageItems = filtered.slice(start, start + B2G_PAGE_SIZE);
             const html = pageItems.map(o => b2gViewMode === 'list' ? opportunityRowHtml(o) : opportunityCardHtml(o)).join('');
             b2gListEl.innerHTML = html;
-            const countEl = document.getElementById('b2g-count'); if (countEl) countEl.textContent = `Mostrando ${filtered.length} oportunidades`;
+            const countEl = document.getElementById('b2g-count'); if (countEl) countEl.textContent = `Mostrando ${ filtered.length } oportunidades`;
             updateActiveFilters();
             renderB2GPagination(totalPages);
         };
@@ -4663,13 +4962,13 @@
             const isB2GIntent = /(b2g|oportunidad|oportunidades|licit|pncp|governo|públic|public)/i.test(lower);
             if (cnpjMatch && isB2GIntent) {
                 const cnpj = cnpjMatch;
-                const url = `${apiBase()}/api/integracoes/licitacoes/cnpj/${cnpj}`;
+                const url = `${ apiBase() } / api / integracoes / licitacoes / cnpj / ${ cnpj }`;
                 try {
                     const res = await fetch(url);
-                    if (!res.ok) return `Erro ao buscar oportunidades B2G do CNPJ ${cnpj}: ${res.status}`;
+                    if (!res.ok) return `Erro ao buscar oportunidades B2G do CNPJ ${ cnpj }: ${ res.status } `;
                     const list = await res.json();
                     const arr = Array.isArray(list) ? list : (list.items || list.dados || []);
-                    if (!Array.isArray(arr) || arr.length === 0) return `Nenhuma oportunidade B2G encontrada para o CNPJ ${cnpj}.`;
+                    if (!Array.isArray(arr) || arr.length === 0) return `Nenhuma oportunidade B2G encontrada para o CNPJ ${ cnpj }.`;
                     const toTitle = (o) => o.titulo || o.objeto || o.resumo || '—';
                     const toOrgao = (o) => o.orgao || o.orgao_nome || o.unidade_gestora || o.orgao_descricao || '—';
                     const toModal = (o) => o.modalidade || o.modalidade_nome || '—';
@@ -4683,19 +4982,19 @@
                         const vb = (typeof b.valor === 'number' ? b.valor : (typeof b.valor_estimado === 'number' ? b.valor_estimado : 0));
                         return vb - va;
                     });
-                    const top = sorted.slice(0, 6).map((o, i) => `${i + 1}. ${toTitle(o)}\n   Órgão: ${toOrgao(o)} • Modalidade: ${toModal(o)}\n   Valor: ${toValor(o)} • Prazo: ${toPrazo(o)}`).join('\n\n');
-                    return `Oportunidades B2G do CNPJ ${cnpj}\n\n${top}`;
+                    const top = sorted.slice(0, 6).map((o, i) => `${ i + 1 }. ${ toTitle(o) } \n   Órgão: ${ toOrgao(o) } • Modalidade: ${ toModal(o) } \n   Valor: ${ toValor(o) } • Prazo: ${ toPrazo(o) } `).join('\n\n');
+                    return `Oportunidades B2G do CNPJ ${ cnpj } \n\n${ top } `;
                 } catch (e) {
-                    return `Falha de rede ao buscar oportunidades B2G para o CNPJ ${cnpj}.`;
+                    return `Falha de rede ao buscar oportunidades B2G para o CNPJ ${ cnpj }.`;
                 }
             }
             if (lower.includes('consultar cnpj')) {
                 const cnpj = cnpjMatch || normalizeCNPJ(lower);
                 if (!cnpj) return 'Informe um CNPJ válido com 14 dígitos.';
-                const url = `${apiBase()}/api/consulta/cnpj/${cnpj}`;
+                const url = `${ apiBase() } /api/consulta / cnpj / ${ cnpj } `;
                 try {
                     const res = await fetch(url);
-                    if (!res.ok) return `Erro ao consultar CNPJ: ${res.status}`;
+                    if (!res.ok) return `Erro ao consultar CNPJ: ${ res.status } `;
                     const d = await res.json() || {};
                     const formatCNPJ = (v) => (v || '').replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
                     const formatDateBR = (v) => v ? new Date(v).toLocaleDateString('pt-BR') : '—';
@@ -4708,9 +5007,9 @@
                         const parts = [x.logradouro, x.numero, x.complemento].filter(Boolean).join(', ');
                         const line1 = parts || '—';
                         const cidadeUf = [x.municipio, x.uf].filter(Boolean).join(' – ');
-                        const cep = x.cep ? `CEP ${x.cep}` : '';
+                        const cep = x.cep ? `CEP ${ x.cep } ` : '';
                         const line2 = [cidadeUf, cep, 'Brasil'].filter(Boolean).join(', ');
-                        return `${line1} \n ${line2}`.trim();
+                        return `${ line1 } \n ${ line2 } `.trim();
                     };
 
                     const cnpjFmt = formatCNPJ(cnpj);
@@ -4731,15 +5030,15 @@
                     });
                     const cnaeCode = d.cnae_principal || d.cnae_fiscal || '—';
                     const cnaeDesc = d.cnae_principal_descricao || d.cnae_descricao || '';
-                    const cnaePrincipal = cnaeDesc ? `${cnaeDesc} (CNAE ${cnaeCode})` : `CNAE ${cnaeCode}`;
+                    const cnaePrincipal = cnaeDesc ? `${ cnaeDesc } (CNAE ${ cnaeCode })` : `CNAE ${ cnaeCode } `;
                     const secundarias = Array.isArray(d.cnaes_secundarios) ? d.cnaes_secundarios : [];
-                    const secundariasResumo = secundarias.length > 0 ? `(${secundarias.length} atividades)` : '—';
+                    const secundariasResumo = secundarias.length > 0 ? `(${ secundarias.length } atividades)` : '—';
                     const sociosRaw = Array.isArray(d.qsa) ? d.qsa : (Array.isArray(d.socios) ? d.socios : []);
                     const toNome = (s) => s.nome_socio || s.nome || '—';
                     const toQual = (s) => s.qualificacao_socio || s.qualificacao || '—';
                     const admins = sociosRaw.filter(s => /administrador/i.test(String(toQual(s))));
                     const sociosSel = (admins.length > 0 ? admins : sociosRaw).slice(0, 5);
-                    const sociosLista = sociosSel.map(s => `${toNome(s)} – ${toQual(s)}`).join('\n');
+                    const sociosLista = sociosSel.map(s => `${ toNome(s) } – ${ toQual(s) } `).join('\n');
 
                     const observacao = situacao && situacao.toUpperCase() === 'INAPTA'
                         ? 'A situação INAPTA indica omissão de declarações junto à Receita Federal e pode impactar a regularidade comercial e fiscal.'
@@ -4752,22 +5051,22 @@
                     return [
                         '📌 Informações principais',
                         '',
-                        `CNPJ: ${cnpjFmt}`,
-                        `Razão Social: ${razao}`,
-                        `Nome Fantasia: ${fantasia}`,
-                        `Data de Abertura: ${abertura}`,
-                        `Natureza Jurídica: ${natureza}`,
-                        `Status da Empresa: ${situacao}`,
-                        `Capital Social: ${capital}`,
+                        `CNPJ: ${ cnpjFmt } `,
+                        `Razão Social: ${ razao } `,
+                        `Nome Fantasia: ${ fantasia } `,
+                        `Data de Abertura: ${ abertura } `,
+                        `Natureza Jurídica: ${ natureza } `,
+                        `Status da Empresa: ${ situacao } `,
+                        `Capital Social: ${ capital } `,
                         '',
                         '🏢 Endereço',
                         '',
-                        `${endereco}`,
+                        `${ endereco } `,
                         '',
                         '📊 Atividade Econômica',
                         '',
-                        `Atividade principal: ${cnaePrincipal}`,
-                        `Atividades secundárias: ${secundariasResumo}`,
+                        `Atividade principal: ${ cnaePrincipal } `,
+                        `Atividades secundárias: ${ secundariasResumo } `,
                         '',
                         '👥 Sócios/Administradores',
                         '',
@@ -4787,14 +5086,14 @@
                 const code = codeMatch ? codeMatch[1] : '';
                 const uf = ufMatch ? ufMatch[2].toUpperCase() : '';
                 const body = { cnae_codes: code ? [code] : [], uf };
-                const url = `${apiBase()}/api/analise/setorial`;
+                const url = `${ apiBase() } /api/analise / setorial`;
                 try {
                     const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                    if (!res.ok) return `Erro na análise setorial: ${res.status}`;
+                    if (!res.ok) return `Erro na análise setorial: ${ res.status } `;
                     const data = await res.json();
                     const kpis = data && data.kpis ? data.kpis : {};
                     const resumo = data && data.resumo ? data.resumo : '';
-                    return `Análise Setorial\nCNAE: ${code || '—'}\nUF: ${uf || '—'}\nKPIs: ${JSON.stringify(kpis)}\nResumo: ${resumo || '—'}`;
+                    return `Análise Setorial\nCNAE: ${ code || '—' } \nUF: ${ uf || '—' } \nKPIs: ${ JSON.stringify(kpis) } \nResumo: ${ resumo || '—' } `;
                 } catch (e) {
                     return 'Falha de rede na análise setorial.';
                 }
@@ -4803,13 +5102,13 @@
             if (lower.includes('licita') || lower.includes('pncp')) {
                 const cnpj = cnpjMatch || normalizeCNPJ(lower);
                 if (!cnpj) return 'Informe um CNPJ para consultar licitações.';
-                const url = `${apiBase()}/api/integracoes/licitacoes/cnpj/${cnpj}`;
+                const url = `${ apiBase() } /api/integracoes / licitacoes / cnpj / ${ cnpj } `;
                 try {
                     const res = await fetch(url);
-                    if (!res.ok) return `Erro nas licitações: ${res.status}`;
+                    if (!res.ok) return `Erro nas licitações: ${ res.status } `;
                     const data = await res.json();
                     const total = Array.isArray(data) ? data.length : (data.total || 0);
-                    return `Licitações PNCP\nCNPJ: ${cnpj}\nTotal encontradas: ${total}`;
+                    return `Licitações PNCP\nCNPJ: ${ cnpj } \nTotal encontradas: ${ total } `;
                 } catch (e) {
                     return 'Falha de rede ao consultar licitações.';
                 }
@@ -4818,14 +5117,14 @@
             if (lower.includes('sócio') || lower.includes('socio')) {
                 const nameMatch = message.match(/nome\s(.+)/i) || message.match(/por\snome\s(.+)/i);
                 const nome = nameMatch ? nameMatch[1].trim() : message.trim();
-                const url = `${apiBase()}/api/consulta/socio?q=${encodeURIComponent(nome)}`;
+                const url = `${ apiBase() } /api/consulta / socio ? q = ${ encodeURIComponent(nome) } `;
                 try {
                     const res = await fetch(url);
-                    if (!res.ok) return `Erro na busca de sócios: ${res.status}`;
+                    if (!res.ok) return `Erro na busca de sócios: ${ res.status } `;
                     const list = await res.json();
                     if (!Array.isArray(list) || list.length === 0) return 'Nenhum sócio encontrado.';
-                    const head = list.slice(0, 5).map(s => `${s.nome_socio || '—'} • ${s.qualificacao || '—'} • ${s.cnpj || '—'}`).join('\n');
-                    return `Sócios encontrados (top 5)\n${head}`;
+                    const head = list.slice(0, 5).map(s => `${ s.nome_socio || '—' } • ${ s.qualificacao || '—' } • ${ s.cnpj || '—' } `).join('\n');
+                    return `Sócios encontrados(top 5) \n${ head } `;
                 } catch (e) {
                     return 'Falha de rede na busca de sócios.';
                 }
@@ -4838,14 +5137,14 @@
                 return 'Olá! Posso ajudar com:\n- Consultar CNPJ 00000000000000\n- Analisar CNAE 6204000 em SP\n- Ver licitações PNCP do CNPJ\n- Buscar empresas por palavra-chave (ex: software em SP)';
             }
             try {
-                const url = `${apiBase()}/api/analise/nl2sql`;
+                const url = `${ apiBase() } /api/analise / nl2sql`;
                 const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pergunta: message, limite: 20 }) });
-                if (!res.ok) return `Não consegui entender. Tente: Consultar CNPJ 00000000000000, Analisar CNAE 6204000 em SP, Ver licitações PNCP do CNPJ.`;
+                if (!res.ok) return `Não consegui entender.Tente: Consultar CNPJ 00000000000000, Analisar CNAE 6204000 em SP, Ver licitações PNCP do CNPJ.`;
                 const data = await res.json();
                 const cols = (data.columns || []).join(', ');
                 const rows = (data.rows || []).slice(0, 5).map(r => (r || []).join(' | ')).join('\n');
                 const sql = data.sql || '';
-                return `Consulta NL → SQL\nColunas: ${cols || '—'}\nAmostra:\n${rows || '—'}\nSQL: ${sql}`;
+                return `Consulta NL → SQL\nColunas: ${ cols || '—' } \nAmostra: \n${ rows || '—' } \nSQL: ${ sql } `;
             } catch (e) {
                 return 'Falha ao interpretar sua pergunta.';
             }
@@ -4895,7 +5194,7 @@
             recentSearches.slice(0, 10).forEach(term => {
                 const li = document.createElement('li');
                 li.className = 'flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-800 cursor-pointer';
-                li.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span class="text-sm">${escapeHtml(term)}</span>`;
+                li.innerHTML = `< svg width = "16" height = "16" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor" stroke - width="2" class="text-slate-300" ><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg > <span class="text-sm">${escapeHtml(term)}</span>`;
                 li.onclick = () => {
                     if (!messageInput || !sendButton) return;
                     messageInput.value = term;
@@ -4920,26 +5219,26 @@
         // Add message to chat
         function addMessage(text, role) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `flex gap-4 mb-6 ${role === 'user' ? 'justify-end' : ''}`;
+            messageDiv.className = `flex gap - 4 mb - 6 ${ role === 'user' ? 'justify-end' : '' } `;
 
             if (role === 'user') {
                 messageDiv.innerHTML = `
-                    <div class="max-w-[85%] bg-blue-600 text-white rounded-2xl rounded-tr-none shadow-md shadow-blue-500/10 px-5 py-3">
-                        <p class="whitespace-pre-wrap text-[15px] leading-relaxed">${escapeHtml(text)}</p>
-                    </div>
-                `;
+            < div class="max-w-[85%] bg-blue-600 text-white rounded-2xl rounded-tr-none shadow-md shadow-blue-500/10 px-5 py-3" >
+                <p class="whitespace-pre-wrap text-[15px] leading-relaxed">${escapeHtml(text)}</p>
+                    </div >
+            `;
             } else {
                 messageDiv.innerHTML = `
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="8" stroke="white" stroke-width="2"/>
-                            <path d="M12 12 L12 4 A8 8 0 0 1 20 12 Z" fill="white"/>
-                        </svg>
-                    </div>
-                    <div class="max-w-[85%] bg-white rounded-2xl rounded-tl-none shadow-sm border border-slate-100 px-5 py-4">
-                        <p class="text-slate-800 whitespace-pre-wrap leading-relaxed text-[15px]">${escapeHtml(text)}</p>
-                    </div>
-                `;
+            < div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20" >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="8" stroke="white" stroke-width="2" />
+                    <path d="M12 12 L12 4 A8 8 0 0 1 20 12 Z" fill="white" />
+                </svg>
+                    </div >
+            <div class="max-w-[85%] bg-white rounded-2xl rounded-tl-none shadow-sm border border-slate-100 px-5 py-4">
+                <p class="text-slate-800 whitespace-pre-wrap leading-relaxed text-[15px]">${escapeHtml(text)}</p>
+            </div>
+        `;
                 speak(text);
             }
 
@@ -4997,7 +5296,7 @@
 
                     // Consultar API
                     const base = apiBase();
-                    const response = await fetch(`${base}/api/consulta/cnpj/${cnpjLimpo}`);
+                    const response = await fetch(`${ base } /api/consulta / cnpj / ${ cnpjLimpo } `);
 
                     if (!response.ok) {
                         throw new Error('Erro ao consultar CNPJ');
@@ -5066,7 +5365,7 @@
                 }
                 if (document.getElementById('cnpj-abertura')) {
                     const dataAbertura = data.data_de_inicio_atividade || data.data_inicio_atividade || '';
-                    document.getElementById('cnpj-abertura').textContent = `Abertura: ${dataAbertura || '—'}`;
+                    document.getElementById('cnpj-abertura').textContent = `Abertura: ${ dataAbertura || '—' } `;
                 }
 
                 // Dados cadastrais
@@ -5078,7 +5377,7 @@
                 }
                 if (document.getElementById('cnpj-capital')) {
                     const capital = parseFloat(data.capital_social || 0);
-                    document.getElementById('cnpj-capital').textContent = capital > 0 ? `R$ ${capital.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—';
+                    document.getElementById('cnpj-capital').textContent = capital > 0 ? `R$ ${ capital.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) } ` : '—';
                 }
 
                 // Localização
@@ -5144,7 +5443,7 @@
 
                     if (oportunidadesList) {
                         oportunidadesList.innerHTML = oportunidades.map(op => `
-                            <div class="border border-slate-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
+            < div class="border border-slate-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer" >
                                 <div class="flex items-start justify-between mb-2">
                                     <h4 class="font-semibold text-slate-900 flex-1">${op.titulo}</h4>
                                     <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">${op.compatibilidade}%</span>
@@ -5166,8 +5465,8 @@
                                         ${op.prazo}
                                     </span>
                                 </div>
-                            </div>
-                        `).join('');
+                            </div >
+            `).join('');
                     }
                 } catch (error) {
                     console.error('Erro ao buscar oportunidades:', error);
@@ -5188,7 +5487,7 @@
                 if (cnpjSearchError) cnpjSearchError.classList.add('hidden');
 
                 try {
-                    const res = await fetch(`${apiBase()}/api/consultas/socio?nome=${encodeURIComponent(termo)}`);
+                    const res = await fetch(`${ apiBase() } /api/consultas / socio ? nome = ${ encodeURIComponent(termo) } `);
                     if (!res.ok) throw new Error('Erro na busca');
                     const data = await res.json();
 
@@ -5203,7 +5502,7 @@
                             const nomeSocio = emp.nome_socio || termo;
 
                             return `
-                                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200 cursor-pointer" onclick="consultarCNPJ('${cnpj}')">
+            < div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200 cursor-pointer" onclick = "consultarCNPJ('${cnpj}')" >
                                     <div>
                                         <div class="font-bold text-slate-800">${razao}</div>
                                         <div class="text-sm text-slate-500 font-mono">CNPJ: ${cnpj}</div>
@@ -5212,8 +5511,8 @@
                                     <svg class="text-slate-400" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M9 18l6-6-6-6"/>
                                     </svg>
-                                </div>
-                            `;
+                                </div >
+            `;
                         }).join('');
                     }
 
@@ -5243,11 +5542,11 @@
                     if (searchBtn) {
                         searchBtn.disabled = true;
                         searchBtn.innerHTML = `
-                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            < svg class="animate-spin h-5 w-5 text-white" xmlns = "http://www.w3.org/2000/svg" fill = "none" viewBox = "0 0 24 24" >
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                        </svg>
-                        Buscando...
+                        </svg >
+            Buscando...
                     `;
                     }
 

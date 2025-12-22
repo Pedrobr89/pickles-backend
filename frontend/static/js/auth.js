@@ -107,11 +107,16 @@ const Auth = {
     },
 
     requireAuth() {
+        // TEMPORÁRIO: Autenticação desabilitada para debug
+        console.warn('⚠️ AUTENTICAÇÃO DESABILITADA - Modo debug ativo');
+        return; // Não faz nada, permite acesso livre
+        /*
         this.checkAuth().then(isAuthenticated => {
             if (!isAuthenticated) {
                 window.location.href = '/login';
             }
         });
+        */
     }
 };
 

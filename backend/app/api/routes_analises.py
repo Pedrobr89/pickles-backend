@@ -1338,6 +1338,7 @@ def api_prospecting_estudo():
 @analises_bp.route('/kpis/geral', methods=['GET'])
 @handle_errors
 def api_kpis_geral():
+    start_time = time.time()  # Performance timing
     uf = request.args.get('uf')
     municipio = request.args.get('municipio')
     cnae = request.args.get('cnae')
@@ -1360,6 +1361,17 @@ def api_kpis_geral():
         if ano_max:
             where.append(f"CAST(strftime({dt_inicio}, '%Y') AS INTEGER) <= {int(ano_max)}")
         where_sql = (' WHERE ' + ' AND '.join(where)) if where else ''
+        # Determina data de referência (última data disponível ou atual)
+        try:
+            q_max_date = f"SELECT max({dt_inicio}) as max_dt FROM read_parquet('{fp}'){where_sql}"
+            df_max = con.execute(q_max_date).df()
+            max_dt = pd.to_datetime(df_max.iloc[0]['max_dt']) if not df_max.empty and pd.notna(df_max.iloc[0]['max_dt']) else pd.Timestamp.now()
+        except Exception:
+            max_dt = pd.Timestamp.now()
+        
+        # Ajusta para utilizar a data de referência (max_dt)
+        current_ref = f"'{max_dt.strftime('%Y-%m-%d')}'"
+
         q_total_filt = f"SELECT count(*) AS total FROM read_parquet('{fp}'){where_sql}"
         df_total_filt = con.execute(q_total_filt).df()
         total_filtrados = int(df_total_filt.iloc[0]['total']) if not df_total_filt.empty else 0
@@ -1368,16 +1380,16 @@ def api_kpis_geral():
         )
         df_ativas = con.execute(q_ativas).df()
         total_ativas = int(df_ativas.iloc[0]['total']) if not df_ativas.empty else 0
-        # Entradas nos últimos 30 dias
+        # Entradas nos últimos 30 dias (baseado no max_dt)
         try:
-            cond_30d = f"{dt_inicio} >= dateadd('day', -30, current_date)"
+            cond_30d = f"{dt_inicio} >= dateadd('day', -30, CAST({current_ref} AS DATE))"
             q_ent_30 = f"SELECT COUNT(*) AS c FROM read_parquet('{fp}'){where_sql}{' AND ' if where_sql else ' WHERE '}{cond_30d}"
             df_e30 = con.execute(q_ent_30).df()
             entradas_30dias = int(df_e30.iloc[0]['c']) if not df_e30.empty else 0
         except Exception:
             entradas_30dias = None
         q_idade = (
-            f"SELECT avg(date_diff('year', {dt_inicio}, current_date)) AS idade_media "
+            f"SELECT avg(date_diff('year', {dt_inicio}, CAST({current_ref} AS DATE))) AS idade_media "
             f"FROM read_parquet('{fp}'){where_sql}"
         )
         df_idade = con.execute(q_idade).df()
@@ -1459,18 +1471,26 @@ def api_kpis_geral():
         except Exception as e:
             logger.warning(f"Erro ao carregar descrições de CNAEs: {e}")
             setores = [{ 'label': str(r['cnae']), 'cnae': str(r['cnae']).zfill(7), 'count': int(r['c']) } for _, r in top_cnae.iterrows()] if not top_cnae.empty else []
-        q_ufs = f"SELECT cast(uf as varchar) AS uf, count(*) AS c FROM read_parquet('{fp}'){where_sql} GROUP BY uf ORDER BY c DESC LIMIT 10"
-        ufs = con.execute(q_ufs).df()
-        mapa = [{ 'label': str(r['uf']), 'count': int(r['c']) } for _, r in ufs.iterrows()] if not ufs.empty else []
+        # Geographic aggregation: switch to municipality level if UF is filtered
+        if uf:
+            # Drill-down to municipalities within the selected state
+            q_geo = f"SELECT cast(municipio as varchar) AS label, count(*) AS c FROM read_parquet('{fp}'){where_sql} GROUP BY municipio ORDER BY c DESC LIMIT 10"
+        else:
+            # State-level aggregation when no UF filter
+            q_geo = f"SELECT cast(uf as varchar) AS label, count(*) AS c FROM read_parquet('{fp}'){where_sql} GROUP BY uf ORDER BY c DESC LIMIT 10"
+        
+        geo_df = con.execute(q_geo).df()
+        mapa = [{ 'label': str(r['label']), 'count': int(r['c']) } for _, r in geo_df.iterrows()] if not geo_df.empty else []
         try:
+            # Calcular crescimento relativo ao mes anterior do dataset (max_dt)
             q_ent_m1 = (
                 "SELECT cast(uf as varchar) AS uf, count(*) AS c FROM read_parquet('{fp}') "
-                f"WHERE strftime({dt_inicio}, '%Y-%m') = strftime(add_months(current_date,-1),'%Y-%m')"
+                f"WHERE strftime({dt_inicio}, '%Y-%m') = strftime(add_months(CAST({current_ref} AS DATE),-1),'%Y-%m')"
                 f"{' AND ' + ' AND '.join(where) if where else ''} GROUP BY uf"
             )
             q_ent_m2 = (
                 "SELECT cast(uf as varchar) AS uf, count(*) AS c FROM read_parquet('{fp}') "
-                f"WHERE strftime({dt_inicio}, '%Y-%m') = strftime(add_months(current_date,-2),'%Y-%m')"
+                f"WHERE strftime({dt_inicio}, '%Y-%m') = strftime(add_months(CAST({current_ref} AS DATE),-2),'%Y-%m')"
                 f"{' AND ' + ' AND '.join(where) if where else ''} GROUP BY uf"
             )
             df_m1 = con.execute(q_ent_m1).df()
@@ -1484,13 +1504,188 @@ def api_kpis_geral():
             estados_crescimento = sorted(states, key=lambda x: x['delta'], reverse=True)[:10]
         except Exception:
             estados_crescimento = []
+        
+        # Age Distribution (Real Data) - Demographics
+        try:
+            q_age_dist = f"""
+            SELECT 
+                CASE 
+                    WHEN age_years <= 1 THEN '0-1 ano'
+                    WHEN age_years <= 3 THEN '1-3 anos'
+                    WHEN age_years <= 5 THEN '3-5 anos'
+                    WHEN age_years <= 10 THEN '5-10 anos'
+                    WHEN age_years <= 20 THEN '10-20 anos'
+                    ELSE '20+ anos'
+                END as faixa,
+                COUNT(*) as c
+            FROM (
+                SELECT date_diff('year', {dt_inicio}, CAST({current_ref} AS DATE)) as age_years
+                FROM read_parquet('{fp}'){where_sql}
+                WHERE {dt_inicio} IS NOT NULL
+            )
+            GROUP BY faixa
+            ORDER BY CASE faixa
+                WHEN '0-1 ano' THEN 1
+                WHEN '1-3 anos' THEN 2
+                WHEN '3-5 anos' THEN 3
+                WHEN '5-10 anos' THEN 4
+                WHEN '10-20 anos' THEN 5
+                ELSE 6
+            END
+            """
+            df_age = con.execute(q_age_dist).df()
+            idade_distribuicao = [{ 'label': str(r['faixa']), 'count': int(r['c']) } for _, r in df_age.iterrows()] if not df_age.empty else []
+        except Exception as e:
+            logger.warning(f"Erro ao calcular distribuição de idade: {e}")
+            idade_distribuicao = []
+        
+        # Survival Rate (Real Data) - Demographics
+        try:
+            q_survival = f"""
+            SELECT 
+                COUNT(CASE WHEN cast(situacao_cadastral as varchar) = '02' THEN 1 END) as ativas,
+                COUNT(*) as total
+            FROM read_parquet('{fp}'){where_sql}
+            """
+            df_survival = con.execute(q_survival).df()
+            if not df_survival.empty:
+                ativas_count = int(df_survival.iloc[0]['ativas'] or 0)
+                total_survival = int(df_survival.iloc[0]['total'] or 0)
+                taxa_sobrevivencia = (ativas_count / max(1, total_survival)) * 100.0 if total_survival > 0 else None
+            else:
+                taxa_sobrevivencia = None
+        except Exception as e:
+            logger.warning(f"Erro ao calcular taxa de sobrevivência: {e}")
+            taxa_sobrevivencia = None
+        
+        # Export Potential (Heuristic) - Commercial
+        try:
+            # CNAEs typically associated with export:manufacturing (10-33), tech (62-63), agro (01-03)
+            q_export = f"""
+            SELECT COUNT(*) as c
+            FROM read_parquet('{fp}'){where_sql}{' AND ' if where_sql else ' WHERE '}
+            (
+                (cast(cnae_fiscal_principal as varchar) LIKE '1%' OR 
+                 cast(cnae_fiscal_principal as varchar) LIKE '2%' OR 
+                 cast(cnae_fiscal_principal as varchar) LIKE '3%' OR
+                 cast(cnae_fiscal_principal as varchar) LIKE '62%' OR
+                 cast(cnae_fiscal_principal as varchar) LIKE '63%' OR
+                 cast(cnae_fiscal_principal as varchar) LIKE '01%' OR
+                 cast(cnae_fiscal_principal as varchar) LIKE '02%' OR
+                 cast(cnae_fiscal_principal as varchar) LIKE '03%')
+            )
+            """
+            df_export = con.execute(q_export).df()
+            export_count = int(df_export.iloc[0]['c']) if not df_export.empty else 0
+            potencial_exportacao_pct = (export_count / max(1, total_filtrados)) * 100.0 if total_filtrados > 0 else 0.0
+        except Exception as e:
+            logger.warning(f"Erro ao calcular potencial de exportação: {e}")
+            potencial_exportacao_pct = None
+        
+        # Market Maturity Index - Commercial
+        try:
+            # Formula: (age_score * 0.4) + (completeness * 0.3) + (active_ratio * 0.3)
+            age_score = min(100.0, (idade_media / 20.0) * 100.0) if idade_media else 50.0  # max at 20 years
+            completeness_score = pct_validos if pct_validos else 50.0
+            active_ratio_score = taxa_sobrevivencia if taxa_sobrevivencia else 50.0
+            indice_maturidade = (age_score * 0.4) + (completeness_score * 0.3) + (active_ratio_score * 0.3)
+        except Exception as e:
+            logger.warning(f"Erro ao calcular índice de maturidade: {e}")
+            indice_maturidade = None
+        
+        # === PHASE 2: ADVANCED KPIs ===
+        
+        # Market Concentration (HHI - Herfindahl-Hirschman Index)
+        try:
+            # Calculate based on top companies' market share within filtered set
+            # HHI = Σ(market_share²) * 10000
+            # Higher HHI = More concentrated market (10000 = monopoly, <1500 = competitive)
+            if total_filtrados > 0:
+                # Get top 10 companies by assumed "size" proxy (we'll use random sampling as proxy since we don't have revenue)
+                # In a real scenario, you'd use faturamento or capital social
+                # For now, we'll calculate HHI based on geographic distribution as a proxy
+                geo_counts = [m['count'] for m in mapa]
+                total_geo = sum(geo_counts)
+                if total_geo > 0:
+                    hhi = sum([(count / total_geo) ** 2 for count in geo_counts]) * 10000
+                    indice_concentracao_hhi = round(hhi, 2)
+                else:
+                    indice_concentracao_hhi = None
+            else:
+                indice_concentracao_hhi = None
+        except Exception as e:
+            logger.warning(f"Erro ao calcular HHI: {e}")
+            indice_concentracao_hhi = None
+        
+        # Competitive Density (Companies per geographic unit)
+        try:
+            num_geo_units = len(mapa)  # Number of states or municipalities
+            if num_geo_units > 0:
+                densidade_competitiva = total_filtrados / num_geo_units
+            else:
+                densidade_competitiva = None
+        except Exception as e:
+            logger.warning(f"Erro ao calcular densidade competitiva: {e}")
+            densidade_competitiva = None
+        
+        # Churn Risk Score (Refined) - 0-100 score
+        try:
+            # Factors: exit_rate (40%), young_age (30%), data_incompleteness (30%)
+            exit_rate = ((sai_latest if 'sai_latest' in locals() else 0) / max(1, total_ativas)) * 100.0 if total_ativas else 0
+            exit_score = min(100.0, exit_rate * 10)  # Scale up for visibility
+            
+            age_risk = max(0, 100 - (idade_media * 5)) if idade_media else 50  # Younger = higher risk
+            
+            data_risk = max(0, 100 - (pct_validos if pct_validos else 50))  # Incomplete = higher risk
+            
+            score_churn_risco = (exit_score * 0.4) + (age_risk * 0.3) + (data_risk * 0.3)
+        except Exception as e:
+            logger.warning(f"Erro ao calcular churn risk score: {e}")
+            score_churn_risco = None
+        
+        # Growth Momentum (3-month trend vs 12-month average)
+        try:
+            if len(entradas) >= 3:
+                last_3_avg = sum([x['count'] for x in entradas[-3:]]) / 3.0
+                twelve_month_avg = sum([x['count'] for x in entradas]) / len(entradas)
+                if twelve_month_avg > 0:
+                    momentum_crescimento = ((last_3_avg - twelve_month_avg) / twelve_month_avg) * 100.0
+                else:
+                    momentum_crescimento = 0.0
+            else:
+                momentum_crescimento = None
+        except Exception as e:
+            logger.warning(f"Erro ao calcular momentum de crescimento: {e}")
+            momentum_crescimento = None
+        
         con.close()
-        evol_labels = [x['label'] for x in entradas]
-        evol_vals = [x['count'] for x in entradas]
-        ent_labels = [x['label'] for x in entradas]
-        ent_vals = [x['count'] for x in entradas]
-        sai_vals = [x['count'] for x in saidas] if saidas else [0]*len(ent_vals)
-        return jsonify({
+        
+        # Alinhamento robusto de meses para o gráfico (últimos 12 meses até max_dt)
+        try:
+            dates = pd.date_range(end=max_dt, periods=12, freq='MS').strftime('%Y-%m').tolist()
+            # Mapeia resultados para dicts para busca rápida
+            ent_map = { x['label']: x['count'] for x in entradas }
+            sai_map = { x['label']: x['count'] for x in saidas } if saidas else {}
+            
+            evol_labels = dates
+            evol_vals = [ent_map.get(ym, 0) for ym in dates]
+            
+            ent_labels = dates
+            ent_vals = [ent_map.get(ym, 0) for ym in dates]
+            sai_vals = [sai_map.get(ym, 0) for ym in dates]
+        except Exception as e:
+            logger.warning(f"Erro no alinhamento de datas do gráfico: {e}")
+            evol_labels = [x['label'] for x in entradas]
+            evol_vals = [x['count'] for x in entradas]
+            ent_labels = [x['label'] for x in entradas]
+            ent_vals = [x['count'] for x in entradas]
+            sai_vals = [x['count'] for x in saidas] if saidas else [0]*len(ent_vals)
+        
+        # Log performance timing
+        elapsed_time = time.time() - start_time
+        logger.info(f"api_kpis_geral executed in {elapsed_time:.2f}s - filters: uf={uf}, cnae={cnae}, total={total_filtrados}")
+        
+        response = jsonify({
             'cards': {
                 'total_ativas': total_ativas,
                 'entradas_mensais': entradas,
@@ -1502,12 +1697,21 @@ def api_kpis_geral():
                 'entradas_30_dias': entradas_30dias,
                 'idade_media': idade_media,
                 'pct_dados_validos': pct_validos,
-                'risk_score': risk_score
+                'risk_score': risk_score,
+                'taxa_sobrevivencia': taxa_sobrevivencia,
+                'potencial_exportacao_pct': potencial_exportacao_pct,
+                'indice_maturidade': indice_maturidade,
+                # Phase 2: Advanced KPIs
+                'indice_concentracao_hhi': indice_concentracao_hhi,
+                'densidade_competitiva': densidade_competitiva,
+                'score_churn_risco': score_churn_risco,
+                'momentum_crescimento': momentum_crescimento
             },
             'graficos': {
                 'evolucao_ativas': { 'labels': evol_labels, 'valores': evol_vals },
                 'entradas_vs_saidas': { 'labels': ent_labels, 'entradas': ent_vals, 'saidas': sai_vals },
-                'mapa_calor': { 'labels': [m['label'] for m in mapa], 'valores': [m['count'] for m in mapa] }
+                'mapa_calor': { 'labels': [m['label'] for m in mapa], 'valores': [m['count'] for m in mapa] },
+                'idade_distribuicao': { 'labels': [x['label'] for x in idade_distribuicao], 'valores': [x['count'] for x in idade_distribuicao] }
             },
             'ranking': {
                 'setores_top': setores,
@@ -1515,6 +1719,7 @@ def api_kpis_geral():
             },
             'total_filtrados': total_filtrados
         })
+        return response
     except Exception as e:
         return jsonify({ 'erro': str(e) }), 500
 

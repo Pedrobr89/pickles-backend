@@ -5729,11 +5729,13 @@
         }
         
         // Aplicar estado inicial
-        updateSidebarState();
+        if (typeof updateSidebarState === 'function') {
+            updateSidebarState();
+        }
         
         // Adicionar CSS para transições suaves
-        const style = document.createElement('style');
-        style.textContent = `
+        const sidebarStyle = document.createElement('style');
+        sidebarStyle.textContent = `
             .sidebar - text {
             transition: opacity 0.3s ease -in -out;
         }
@@ -5741,12 +5743,10 @@
             transition: transform 0.3s ease -in -out;
         }
         `;
-        document.head.appendChild(style);
+        document.head.appendChild(sidebarStyle);
 
     </script>
 </body>
-<!--
--->
 
 </html>
 <script src="/static/js/auth.js"></script>

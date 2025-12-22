@@ -104,6 +104,8 @@ def create_app(config_name='development'):
     from app.api.routes_b2g_enriquecida import b2g_enriquecida_bp
     # Sprint 3 - Alertas e Notificações
     from app.api.routes_alertas_notificacoes import alertas_bp, notificacoes_bp
+    # Sprint 4 - Filtros, Mapas e Exportação
+    from app.api.routes_filtros_exportacao import filtros_bp, mapa_bp, export_bp
 
     app.register_blueprint(consultas_bp, url_prefix='/api/consulta')
     app.register_blueprint(analises_bp, url_prefix='/api/analise')
@@ -114,6 +116,12 @@ def create_app(config_name='development'):
     app.register_blueprint(user_bp, url_prefix='/api/user')
     app.register_blueprint(payments_bp, url_prefix='/api/payments')
     app.register_blueprint(favoritos_bp) # Já tem url_prefix='/api/favoritos' no blueprint
+    app.register_blueprint(b2g_enriquecida_bp, url_prefix='/api/b2g')
+    app.register_blueprint(alertas_bp, url_prefix='/api/alertas')
+    app.register_blueprint(notificacoes_bp, url_prefix='/api/notificacoes')
+    app.register_blueprint(filtros_bp, url_prefix='/api/filtros')
+    app.register_blueprint(mapa_bp, url_prefix='/api/mapa')
+    app.register_blueprint(export_bp, url_prefix='/api/export')
     logger.info("✓ Blueprints registrados")
 
     # Error Handlers

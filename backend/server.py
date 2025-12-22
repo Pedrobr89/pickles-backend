@@ -100,6 +100,10 @@ def create_app(config_name='development'):
     from app.api.routes_user import user_bp
     from app.api.routes_payments import payments_bp
     from app.api.routes_favoritos import bp as favoritos_bp
+    # Sprint 2 - Enriquecimento e IA
+    from app.api.routes_b2g_enriquecida import b2g_enriquecida_bp
+    # Sprint 3 - Alertas e Notificações
+    from app.api.routes_alertas_notificacoes import alertas_bp, notificacoes_bp
 
     app.register_blueprint(consultas_bp, url_prefix='/api/consulta')
     app.register_blueprint(analises_bp, url_prefix='/api/analise')

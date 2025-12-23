@@ -61,7 +61,7 @@ def aplicar_filtros():
 
 @filtros_bp.route('/salvos', methods=['GET'])
 @handle_errors
-def lista r_filtros_salvos():
+def listar_filtros_salvos():
     """Lista filtros salvos do usuário"""
     usuario_id = _get_current_user_id()
     

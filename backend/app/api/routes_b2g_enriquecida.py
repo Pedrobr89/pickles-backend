@@ -161,7 +161,7 @@ def rota_historico_orgao(orgao_nome: str):
     Returns:
         Histórico completo do órgão
     """
-    service = DadosContextuais Service()
+    service = DadosContextuaisService()
     historico = service._obter_historico_orgao(orgao_nome)
     
     return jsonify({

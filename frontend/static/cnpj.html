@@ -311,54 +311,225 @@
     <main class="flex-1 flex flex-col items-center justify-start pt-6 px-4 pb-32" id="main-content">
 
         <!-- Welcome Screen -->
-        <div id="welcome-screen" class="w-full max-w-3xl mx-auto text-center">
-            <div class="mb-8 flex justify-center">
-                <div class="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="8" stroke="white" stroke-width="2" />
-                        <path d="M12 12 L12 4 A8 8 0 0 1 20 12 Z" fill="white" />
-                    </svg>
-                </div>
+        <section id="cnpj-page" class="w-full max-w-7xl mx-auto hidden animate-fade-in-up">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight mb-2">🔍 Consulta CNPJ</h1>
+                <p class="text-slate-500">Consulte informações detalhadas de empresas e identifique oportunidades
+                    compatíveis</p>
             </div>
 
-            <h1 class="text-3xl font-bold text-slate-800 mb-3 tracking-tight">Como posso ajudar sua empresa hoje?</h1>
-            <p class="text-slate-500 mb-12 text-lg">Analise mercados, encontre oportunidades B2B/B2G e tire dúvidas com
-                IA.</p>
-
-            <div class="flex justify-center w-full px-4">
-                <div
-                    class="flex items-center gap-2 w-full max-w-2xl bg-white p-2 rounded-2xl shadow-xl border border-slate-100 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-                    <div class="pl-4 text-slate-400">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="11" cy="11" r="8" />
-                            <path d="M21 21l-4.35-4.35" />
-                        </svg>
+            <!-- Search Box -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-6">
+                <div class="flex gap-3">
+                    <div class="relative flex-1">
+                        <input id="cnpj-search-input" type="text"
+                            placeholder="Digite o CNPJ ou Nome do Sócio/Empresa..."
+                            class="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-medium text-slate-700 text-lg">
+                        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                        </div>
                     </div>
-                    <textarea id="welcome-search" rows="1"
-                        class="flex-1 px-4 py-3 bg-transparent border-none focus:ring-0 text-slate-700 placeholder:text-slate-400 text-lg resize-none"
-                        placeholder="Ex: 'Analisar mercado de TI em SP' ou 'Licitações de limpeza'"></textarea>
-                    <button id="welcome-send"
-                        class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/30"
-                        disabled>
+                    <button id="cnpj-search-btn"
+                        class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 transition-all active:scale-95 flex items-center gap-2">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
-                            <line x1="22" y1="2" x2="11" y2="13" />
-                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="M21 21l-4.35-4.35"></path>
                         </svg>
+                        Consultar
                     </button>
                 </div>
+                <div id="cnpj-search-error" class="hidden mt-3 text-sm text-red-600 flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span></span>
+                </div>
             </div>
 
-        </div>
+            <!-- Loading State -->
+            <div id="cnpj-loading" class="hidden bg-white rounded-2xl border border-slate-200 p-12 shadow-sm mb-6">
+                <div class="flex flex-col items-center justify-center">
+                    <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4">
+                    </div>
+                    <p class="text-slate-600 font-medium">Consultando dados...</p>
+                </div>
+            </div>
 
+            <!-- Company Profile -->
+            <div id="cnpj-profile" class="hidden animate-fade-in-up">
+                <!-- Company Header -->
+                <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-8 shadow-lg mb-6 text-white">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span id="cnpj-status-badge"
+                                    class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full uppercase">Ativa</span>
+                                <span id="cnpj-porte-badge"
+                                    class="px-3 py-1 bg-white/20 text-white text-xs font-semibold rounded-full">Microempresa</span>
+                            </div>
+                            <h2 id="cnpj-razao-social" class="text-3xl font-bold mb-2">—</h2>
+                            <p id="cnpj-nome-fantasia" class="text-blue-100 text-lg mb-4">—</p>
+                            <div class="flex items-center gap-6 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M3 21h18M5 21V7l8-4 8 4v14M8 21v-4h8v4" />
+                                    </svg>
+                                    <span id="cnpj-number" class="font-mono">—</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    <span id="cnpj-abertura">Abertura: —</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
 
+                <!-- Company Details Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Dados Cadastrais -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            Dados Cadastrais
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">CNAE
+                                    Principal</div>
+                                <div id="cnpj-cnae" class="text-sm font-medium text-slate-900">—</div>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Natureza
+                                    Jurídica</div>
+                                <div id="cnpj-natureza" class="text-sm font-medium text-slate-900">—</div>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Capital
+                                    Social</div>
+                                <div id="cnpj-capital" class="text-sm font-medium text-slate-900">—</div>
+                            </div>
+                        </div>
+                    </div>
 
-        
+                    <!-- Localização -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            Localização
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Endereço
+                                </div>
+                                <div id="cnpj-endereco" class="text-sm font-medium text-slate-900">—</div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                                        Município</div>
+                                    <div id="cnpj-municipio" class="text-sm font-medium text-slate-900">—</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">UF
+                                    </div>
+                                    <div id="cnpj-uf" class="text-sm font-medium text-slate-900">—</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">CEP</div>
+                                <div id="cnpj-cep" class="text-sm font-medium text-slate-900">—</div>
+                            </div>
+                        </div>
+                    </div>
 
-        
+                    <!-- Contato -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                </path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                            Contato
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">E-mail
+                                </div>
+                                <div id="cnpj-email" class="text-sm font-medium text-slate-900">—</div>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Telefone
+                                </div>
+                                <div id="cnpj-telefone" class="text-sm font-medium text-slate-900">—</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        
+                <!-- Oportunidades Compatíveis -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            Oportunidades Compatíveis
+                        </h3>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-bold rounded-full">
+                            <span id="cnpj-oportunidades-count">0</span> encontradas
+                        </span>
+                    </div>
+
+                    <div id="cnpj-oportunidades-list" class="space-y-4">
+                        <!-- Oportunidades serão inseridas aqui via JavaScript -->
+                        <div class="text-center py-8 text-slate-400">
+                            <svg class="w-16 h-16 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 6v6l4 2"></path>
+                            </svg>
+                            <p>Carregando oportunidades...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
                                 Situação / Perfil
                             </label>
@@ -583,7 +754,6 @@
     <script src="/static/js/main.js"></script>
 </body>
 </html>
-
 
 
 

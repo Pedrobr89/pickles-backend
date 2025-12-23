@@ -311,50 +311,478 @@
     <main class="flex-1 flex flex-col items-center justify-start pt-6 px-4 pb-32" id="main-content">
 
         <!-- Welcome Screen -->
-        <div id="welcome-screen" class="w-full max-w-3xl mx-auto text-center">
-            <div class="mb-8 flex justify-center">
-                <div class="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="8" stroke="white" stroke-width="2" />
-                        <path d="M12 12 L12 4 A8 8 0 0 1 20 12 Z" fill="white" />
-                    </svg>
+        
+
+
+
+        <section id="market-page" class="w-full max-w-7xl mx-auto hidden">
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-2">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-900 tracking-tight">📊 Análise Setorial</h1>
+                        <p class="text-slate-500 text-sm mt-1">Explore dados estratégicos, tendências de mercado e
+                            inteligência competitiva.</p>
+                    </div>
+
                 </div>
             </div>
 
-            <h1 class="text-3xl font-bold text-slate-800 mb-3 tracking-tight">Como posso ajudar sua empresa hoje?</h1>
-            <p class="text-slate-500 mb-12 text-lg">Analise mercados, encontre oportunidades B2B/B2G e tire dúvidas com
-                IA.</p>
+            <!-- Search & Filters Card -->
+            <div class="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm mb-8">
+                <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" class="text-blue-600">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="M21 21l-4.35-4.35"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">Filtros de Análise</h3>
+                            <p class="text-xs text-slate-500">Configure os parâmetros para análise setorial</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="mk-export"
+                            class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1.5"
+                            title="Exportar Dados">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Exportar
+                        </button>
+                        <button id="mk-share"
+                            class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1.5"
+                            title="Compartilhar Link">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="18" cy="5" r="3"></circle>
+                                <circle cx="6" cy="12" r="3"></circle>
+                                <circle cx="18" cy="19" r="3"></circle>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                            </svg>
+                            Compartilhar
+                        </button>
+                    </div>
+                </div>
 
-            <div class="flex justify-center w-full px-4">
-                <div
-                    class="flex items-center gap-2 w-full max-w-2xl bg-white p-2 rounded-2xl shadow-xl border border-slate-100 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-                    <div class="pl-4 text-slate-400">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="11" cy="11" r="8" />
-                            <path d="M21 21l-4.35-4.35" />
+                <div class="flex flex-col lg:flex-row gap-4 items-end">
+                    <!-- Setor Select -->
+                    <div class="w-full lg:w-48">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                            Setor Econômico
+                        </label>
+                        <select id="filter-setor"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-sm font-medium text-slate-700">
+                            <option value="">🏢 Todos</option>
+                        </select>
+                    </div>
+
+                    <!-- CNAE Input -->
+                    <div class="relative flex-grow">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                            CNAE <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <input id="filter-cnae"
+                                class="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-blue-500 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-sm font-medium text-slate-700 placeholder:text-slate-400"
+                                placeholder="Digite o código CNAE...">
+                            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="M21 21l-4.35-4.35"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="cnae-suggestions"
+                            class="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-lg z-10 hidden max-h-56 overflow-auto">
+                        </div>
+                    </div>
+
+                    <!-- UF Select -->
+                    <div class="w-full lg:w-48">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                            Estado (UF)
+                        </label>
+                        <select id="filter-uf"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-sm font-medium text-slate-700">
+                            <option value="">🇧🇷 Todos</option>
+                            <option value="AC">AC - Acre</option>
+                            <option value="AL">AL - Alagoas</option>
+                            <option value="AP">AP - Amapá</option>
+                            <option value="AM">AM - Amazonas</option>
+                            <option value="BA">BA - Bahia</option>
+                            <option value="CE">CE - Ceará</option>
+                            <option value="DF">DF - Distrito Federal</option>
+                            <option value="ES">ES - Espírito Santo</option>
+                            <option value="GO">GO - Goiás</option>
+                            <option value="MA">MA - Maranhão</option>
+                            <option value="MG">MG - Minas Gerais</option>
+                            <option value="MS">MS - Mato Grosso do Sul</option>
+                            <option value="MT">MT - Mato Grosso</option>
+                            <option value="PA">PA - Pará</option>
+                            <option value="PB">PB - Paraíba</option>
+                            <option value="PE">PE - Pernambuco</option>
+                            <option value="PI">PI - Piauí</option>
+                            <option value="PR">PR - Paraná</option>
+                            <option value="RJ">RJ - Rio de Janeiro</option>
+                            <option value="RN">RN - Rio Grande do Norte</option>
+                            <option value="RO">RO - Rondônia</option>
+                            <option value="RR">RR - Roraima</option>
+                            <option value="RS">RS - Rio Grande do Sul</option>
+                            <option value="SC">SC - Santa Catarina</option>
+                            <option value="SE">SE - Sergipe</option>
+                            <option value="SP">SP - São Paulo</option>
+                            <option value="TO">TO - Tocantins</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-2">
+                        <button id="mk-clear" type="button"
+                            class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-all whitespace-nowrap">
+                            Limpar
+                        </button>
+                        <button id="mk-run" type="button"
+                            class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="M21 21l-4.35-4.35"></path>
+                            </svg>
+                            Analisar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Tabs -->
+            <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm mb-8">
+                <div class="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-2">
+                    <button
+                        class="dashboard-tab active px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all"
+                        data-view="visao-geral">📊 Visão Geral</button>
+                    <button
+                        class="dashboard-tab px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap text-slate-600 transition-all"
+                        data-view="estrutura">🏢 Estrutura</button>
+                    <button
+                        class="dashboard-tab px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap text-slate-600 transition-all"
+                        data-view="demografia">📈 Demografia</button>
+                    <button
+                        class="dashboard-tab px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap text-slate-600 transition-all"
+                        data-view="comercial">💼 Comercial</button>
+                    <button
+                        class="dashboard-tab px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap text-slate-600 transition-all"
+                        data-view="formalizacao">✅ Formalização</button>
+                    <button
+                        class="dashboard-tab px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap text-slate-600 transition-all"
+                        data-view="societaria">👥 Societária</button>
+                    <button
+                        class="dashboard-tab px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap text-slate-600 transition-all"
+                        data-view="territorial">🗺️ Territorial</button>
+                    <button
+                        class="dashboard-tab px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap text-slate-600 transition-all"
+                        data-view="saude">💚 Saúde</button>
+                    <button
+                        class="dashboard-tab px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap text-slate-600 transition-all"
+                        data-view="players">🏢 Players</button>
+                </div>
+            </div>
+
+            <!-- Players View -->
+            <div id="view-players" class="dashboard-view mt-6 hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-900">🏢 Lista de Players</h2>
+                    <div class="text-sm text-slate-500" id="players-count">Aguardando análise...</div>
+                </div>
+
+                <!-- Toolbar -->
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="relative flex-1">
+                        <input type="text" id="players-search-input" placeholder="Buscar empresa por nome..."
+                            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all">
+                        <svg class="absolute left-3 top-2.5 text-slate-400" width="18" height="18" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="M21 21l-4.35-4.35"></path>
                         </svg>
                     </div>
-                    <textarea id="welcome-search" rows="1"
-                        class="flex-1 px-4 py-3 bg-transparent border-none focus:ring-0 text-slate-700 placeholder:text-slate-400 text-lg resize-none"
-                        placeholder="Ex: 'Analisar mercado de TI em SP' ou 'Licitações de limpeza'"></textarea>
-                    <button id="welcome-send"
-                        class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/30"
-                        disabled>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <line x1="22" y1="2" x2="11" y2="13" />
-                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                        </svg>
-                    </button>
+                    <select id="players-sort"
+                        class="px-4 py-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:border-blue-500 bg-white min-w-[200px]">
+                        <option value="faturamento_desc">Maior Faturamento</option>
+                        <option value="funcionarios_desc">Mais Funcionários</option>
+                        <option value="antiguidade_desc">Mais Antigas</option>
+                        <option value="recente">Recentes</option>
+                    </select>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th class="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Empresa / CNPJ</th>
+                                    <th class="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Responsável</th>
+                                    <th class="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Contato</th>
+                                    <th class="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Localização</th>
+                                    <th
+                                        class="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
+                                        Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="players-list-body" class="divide-y divide-slate-100 bg-white">
+                                <!-- Conteúdo inserido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Empty State / Loading placeholder será inserido aqui se necessário -->
+                </div>
+                <div id="players-pagination" class="mt-8 flex justify-center gap-2"></div>
+            </div>
+
+            <div id="view-visao-geral" class="dashboard-view mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">📊 Executivo</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 card-hover relative group">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">TAM</div>
+                            <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+                        </div>
+                        <div id="ex-market-size" class="text-xl font-bold text-slate-800 tracking-tight mt-1">—</div>
+                        <div class="text-[10px] text-slate-400 mt-2 font-medium">Market Size</div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 card-hover relative group">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">Health</div>
+                            <div class="w-2 h-2 rounded-full bg-sky-500"></div>
+                        </div>
+                        <div id="ex-market-health" class="text-xl font-bold text-slate-800 tracking-tight mt-1">—%</div>
+                        <div class="text-[10px] text-slate-400 mt-2 font-medium">Índice de Saúde</div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 card-hover relative group">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">Growth</div>
+                            <div class="flex items-center gap-2">
+                                <select
+                                    class="text-[10px] bg-slate-50 border-none rounded py-0.5 px-1 text-slate-500 focus:ring-0 cursor-pointer hover:bg-slate-100 outline-none"
+                                    onchange="if(window.updateGrowthFilter) window.updateGrowthFilter(this.value)">
+                                    <option value="30">30d</option>
+                                    <option value="60">60d</option>
+                                </select>
+                                <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                            </div>
+                        </div>
+                        <div id="ex-growth-potential" class="text-xl font-bold text-slate-800 tracking-tight mt-1">—%
+                        </div>
+                        <div class="text-[10px] text-slate-400 mt-2 font-medium">Potencial</div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 card-hover relative group">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">Risk</div>
+                            <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+                        </div>
+                        <div id="ex-risk-score" class="text-xl font-bold text-slate-800 tracking-tight mt-1">—</div>
+                        <div class="text-[10px] text-slate-400 mt-2 font-medium">Score Risco</div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 card-hover relative group">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">Compliance</div>
+                            <div class="w-2 h-2 rounded-full bg-rose-500"></div>
+                        </div>
+                        <div id="ex-compliance-exposure" class="text-xl font-bold text-slate-800 tracking-tight mt-1">—%
+                        </div>
+                        <div class="text-[10px] text-slate-400 mt-2 font-medium">Exposição</div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 card-hover relative group">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">Churn</div>
+                            <div class="flex items-center gap-2">
+                                <select id="churn-filter-select"
+                                    class="text-[10px] bg-slate-50 border-none rounded py-0.5 px-1 text-slate-500 focus:ring-0 cursor-pointer hover:bg-slate-100 outline-none"
+                                    onchange="if(window.updateChurnFilter) window.updateChurnFilter(this.value)">
+                                    <option value="30">30d</option>
+                                    <option value="60">60d</option>
+                                </select>
+                                <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                            </div>
+                        </div>
+                        <div id="vg-saidas-mensais" class="text-xl font-bold text-slate-800 tracking-tight mt-1">—</div>
+                        <div class="text-[10px] text-slate-400 mt-2 font-medium">Saídas no Período</div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 card-hover relative group">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">Age</div>
+                            <div class="w-2 h-2 rounded-full bg-violet-500"></div>
+                        </div>
+                        <div id="vg-idade-media" class="text-xl font-bold text-slate-800 tracking-tight mt-1">—</div>
+                        <div class="text-[10px] text-slate-400 mt-2 font-medium">Idade Média</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Tendência Macro</div>
+                        <div id="vg-evolucao-geral" class="h-32 flex items-center justify-center text-gray-400">—</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Mapa de Oportunidade</div>
+                        <div id="vg-mapa-calor" class="h-32 flex items-center justify-center text-gray-400">—</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Evolução Empresas Ativas (12 meses)</div>
+                        <div id="vg-evolucao-12m" class="h-32 flex items-center justify-center text-gray-400">—</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Entradas vs Saídas</div>
+                        <div id="vg-entradas-saidas" class="h-32 flex items-center justify-center text-gray-400">—</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Distribuição Geográfica</div>
+                        <div id="vg-mapa-distribuicao" class="h-32 flex items-center justify-center text-gray-400">—
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Top Setores (CNAE)</div>
+                        <div id="vg-top-setores" class="space-y-2">
+                            <div class="flex justify-between text-sm"><span>—</span><span class="font-semibold">—</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Estados em Crescimento</div>
+                        <div id="vg-estados-crescimento" class="space-y-2">
+                            <div class="flex justify-between text-sm"><span>—</span><span
+                                    class="text-green-600 font-semibold">↑ —</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="view-estrutura" class="dashboard-view mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">🏢 Estrutura Empresarial</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Empresas por CNAE</div>
+                        <div id="es-cnae" class="h-64 flex items-center justify-center text-gray-400">📊 Barras
+                            Horizontais</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Distribuição por Porte</div>
+                        <div id="es-porte" class="h-64 flex items-center justify-center text-gray-400">🍩 Donut Chart
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="view-demografia" class="dashboard-view mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">📈 Demografia Empresarial</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Entradas ao Longo do Tempo</div>
+                        <div id="d-entradas-tempo" class="h-64 flex items-center justify-center text-gray-400">📈 Line
+                            Chart</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Distribuição por Idade</div>
+                        <div id="d-idade-dist" class="h-64 flex items-center justify-center text-gray-400">📊 Histogram
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="view-comercial" class="dashboard-view mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">💼 Potencial Comercial</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Exportadores por CNAE</div>
+                        <div id="c-exportadores-cnae" class="h-64 flex items-center justify-center text-gray-400">📊 Bar
+                            Chart</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Maturidade Empresarial</div>
+                        <div id="c-maturidade-radar" class="h-64 flex items-center justify-center text-gray-400">📡
+                            Radar Chart</div>
+                    </div>
+                </div>
+            </div>
+            <div id="view-formalizacao" class="dashboard-view mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">✅ Indicadores de Formalização</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Endereços Válidos</div>
+                        <div id="f-enderecos-donut" class="h-64 flex items-center justify-center text-gray-400">🍩 Donut
+                            Chart</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Situação Cadastral</div>
+                        <div id="f-situacao-stacked" class="h-64 flex items-center justify-center text-gray-400">📊
+                            Stacked Chart</div>
+                    </div>
+                </div>
+            </div>
+            <div id="view-societaria" class="dashboard-view mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">👥 Estrutura Societária</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Sócios por CNAE</div>
+                        <div id="s-socios-cnae" class="h-64 flex items-center justify-center text-gray-400">📊 Bar Chart
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Qualificação Sócios</div>
+                        <div id="s-qualificacao-donut" class="h-64 flex items-center justify-center text-gray-400">🍩
+                            Donut</div>
+                    </div>
+                </div>
+            </div>
+            <div id="view-territorial" class="dashboard-view mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">🗺️ Indicadores Territoriais</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">LQ por Município</div>
+                        <div id="t-lq-municipio" class="h-64 flex items-center justify-center text-gray-400">🗺️ Mapa
+                            Choropleth</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Hubs Setoriais</div>
+                        <div id="t-hubs-setoriais" class="h-64 flex items-center justify-center text-gray-400">📍
+                            Cluster Map</div>
+                    </div>
+                </div>
+            </div>
+            <div id="view-saude" class="dashboard-view mt-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">💚 Saúde da Base Empresarial</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Renovação ao longo do tempo</div>
+                        <div id="s-renovacao-tempo" class="h-64 flex items-center justify-center text-gray-400">—</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-4">
+                        <div class="text-sm font-semibold text-gray-900 mb-3">Mortalidade por Setor</div>
+                        <div id="s-mortalidade-setor" class="h-64 flex items-center justify-center text-gray-400">📊 Bar
+                            Chart</div>
+                    </div>
                 </div>
             </div>
 
-        </div>
-
-
-
-        
+        </section>
 
         
 
